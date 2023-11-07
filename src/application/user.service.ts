@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { FilterQuery, Types } from 'mongoose';
+import { FilterQuery } from 'mongoose';
 import { HandleError } from 'src/common/decorator/handler-error.decorator';
 import { GenericErrorCode } from 'src/common/errors/generic-error';
 import { Err, Ok, Result } from 'src/common/result';
@@ -83,45 +83,75 @@ export class UserService {
         const res = await this.userRepository.getOneTodoList(query, userId);
     }
 
-    async deleteTodolist(userId: string, todolistId: string) {
-        const res = await await this.userRepository.deleteTodolist(
+    async deleteTodolist(
+        userId: string,
+        todolistId: string,
+    ): Promise<Result<boolean>> {
+        const res = await this.userRepository.deleteTodolist(
             userId,
             todolistId,
         );
+        if (!res) {
+            return Err('delete todolist failed');
+        }
+        return Ok(res);
     }
 
     async createTodo(
         todoBody: Partial<ITodo>,
         todolistId: string,
         userId: string,
-    ) {
-        const res = await await this.userRepository.createTodo(
+    ): Promise<Result<ITodoEntity>> {
+        const res = await this.userRepository.createTodo(
             todoBody,
             userId,
             todolistId,
         );
+        if (!res) {
+            return Err('todo create failed');
+        }
+        return Ok(res);
     }
 
-    async getAllTodo(userId: string, todolistId: string) {
-        const res = await await this.userRepository.getAllTodo(
-            userId,
-            todolistId,
-        );
+    async getOneTodo(
+        todoId: string,
+        userId: string,
+    ): Promise<Result<ITodoEntity>> {
+        const res = await this.userRepository.getOneTodo(todoId, userId);
+        if (!res) {
+            return Err('todo not found', GenericErrorCode.NOT_FOUND);
+        }
+        return Ok(res);
     }
 
-    async getOneTodo(todoId: string, userId: string) {
-        const res = await await this.userRepository.getOneTodo(todoId, userId);
+    async getAllTodo(
+        userId: string,
+        todolistId: string,
+    ): Promise<Result<ITodoEntity[]>> {
+        const res = await this.userRepository.getAllTodo(userId, todolistId);
+        if (!res) {
+            return Err('todos not found', GenericErrorCode.NOT_FOUND);
+        }
+        return Ok(res);
     }
 
-    async deleteTodo(todoId: string, userId: string) {
-        const res = await await this.userRepository.deleteTodo(todoId, userId);
+    async deleteTodo(todoId: string, userId: string): Promise<Result<boolean>> {
+        const res = await this.userRepository.deleteTodo(todoId, userId);
+        if (!res) {
+            return Err('delete todo failed');
+        }
+        return Ok(res);
     }
 
-    async updateTodo(todoId: string, ITodo: Partial<ITodo>, userId: string) {
-        const res = await await this.userRepository.updateTodo(
-            todoId,
-            ITodo,
-            userId,
-        );
+    async updateTodo(
+        todoId: string,
+        ITodo: Partial<ITodo>,
+        userId: string,
+    ): Promise<Result<ITodoEntity>> {
+        const res = await this.userRepository.updateTodo(todoId, ITodo, userId);
+        if (!res) {
+            return Err('update todo failed');
+        }
+        return Ok(res);
     }
 }
