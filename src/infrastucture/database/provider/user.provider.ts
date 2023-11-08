@@ -12,10 +12,7 @@ export interface IUserReader {
         userId: string,
     ): Promise<ITodolistEntity>;
     getAllTodolist(userId: string): Promise<ITodolistEntity[]>;
-    getOneTodo(
-        todoId: string,
-        userId: string,
-    ): Promise<ITodoEntity>;
+    getOneTodo(todoId: string, userId: string): Promise<ITodoEntity>;
     getAllTodo(userId: string, todolistId: string): Promise<ITodoEntity[]>;
 }
 export interface IUserWriter {
@@ -33,6 +30,7 @@ export interface IUserWriter {
     ): Promise<ITodoEntity>;
     updateTodo(
         todoId: string,
+        todolistId: string,
         ITodo: Partial<ITodo>,
         userId: string,
     ): Promise<ITodoEntity>;

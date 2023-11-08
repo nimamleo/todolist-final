@@ -16,18 +16,22 @@ import {
     ApiOperation,
     ApiTags,
 } from '@nestjs/swagger';
-import { CreateTodoDto } from '../validation/todo/todo-operation';
-import { UpdateTodoDto } from '../validation/todo/update-todo.dto';
 import { response, Response } from 'express';
 import { AbstractHttpController } from '../../../common/abstract-http.controller';
 import { Ok } from 'src/common/result';
 import { GetAllTodolistsResponse } from './models/getAllTodolists.model';
 import { GetOneTodoListResponse } from './models/getOneTodoList.model';
 import { UserRequest, UserResponse } from './models/createUser.model';
-import { CreateTodoResponse } from './models/createTodo.model';
+import {
+    CreateTodoRequest,
+    CreateTodoResponse,
+} from './models/createTodo.model';
 import { GetOneTodoResponse } from './models/getOneTodo.model';
 import { GetAllTodoResponse } from './models/getAllTodo.model';
-import { UpdateTodoResponse } from './models/updateTodo.model';
+import {
+    UpdateTodoRequest,
+    UpdateTodoResponse,
+} from './models/updateTodo.model';
 import { ApiStdResponse } from '../../../common/ApiStdResponse';
 import { DeleteUserResponse } from './models/deleteUser.model';
 import { DeleteTodoResponse } from './models/deleteTodo.model';
@@ -48,6 +52,7 @@ export class UserController extends AbstractHttpController {
     @Post('todolist')
     @ApiTags('Todolist')
     @ApiOperation({ summary: 'create todolist' })
+    @ApiConsumes('application/x-www-form-urlencoded')
     @ApiExtraModels(TodolistResponse, StdResponse)
     @ApiStdResponse(TodolistResponse)
     async createTodolist(
@@ -71,12 +76,7 @@ export class UserController extends AbstractHttpController {
                 id: res.value.id,
                 listTitle: res.value.listTitle,
                 createdAt: res.value.createdAt.toISOString(),
-                todos: res.value.todos.map((x) => ({
-                    title: x.title,
-                    id: x.id,
-                    createdAt: x.createdAt.toISOString(),
-                    description: x.description,
-                })),
+                todos: [],
             }),
         );
     }
@@ -179,11 +179,13 @@ export class UserController extends AbstractHttpController {
     @ApiExtraModels(CreateTodoResponse, StdResponse)
     @ApiStdResponse(CreateTodoResponse)
     async createTodo(
-        @Body() body: CreateTodoDto,
+        @Res() response: Response,
+        @Body() body: CreateTodoRequest,
         @Headers('user') userId: string,
         @Param('id') todolistId: string,
-    ) {
+    ): Promise<CreateTodoResponse> {
         const res = await this.userService.createTodo(body, todolistId, userId);
+        console.log({ res });
         if (res.isError()) {
             super.sendResult(response, res);
             return;
@@ -210,7 +212,7 @@ export class UserController extends AbstractHttpController {
         @Res() response: Response,
         @Headers('user') userId: string,
         @Param('todolistId') todolistId: string,
-    ) {
+    ): Promise<GetAllTodoResponse> {
         const res = await this.userService.getAllTodo(userId, todolistId);
         if (res.isError()) {
             super.sendResult(response, res);
@@ -233,14 +235,17 @@ export class UserController extends AbstractHttpController {
     @Get('todo/:id')
     @ApiTags('Todo')
     @ApiOperation({ summary: 'get one todo' })
+    @ApiExtraModels(GetOneTodoResponse, StdResponse)
+    @ApiStdResponse(GetOneTodoResponse)
     async getOneTodo(
         @Res() response: Response,
         @Headers('user') userId: string,
         @Param('id') todoId: string,
-    ) {
+    ): Promise<GetOneTodoResponse> {
         const res = await this.userService.getOneTodo(todoId, userId);
         if (res.isError()) {
             super.sendResult(response, res);
+            return;
         }
         if (res.isOk()) {
             super.sendResult(
@@ -263,7 +268,7 @@ export class UserController extends AbstractHttpController {
         @Res() response: Response,
         @Headers('user') userId: string,
         @Param('id') todoId: string,
-    ) {
+    ): Promise<DeleteTodoResponse> {
         const res = await this.userService.deleteTodo(todoId, userId);
         if (res.isError()) {
             super.sendResult(response, res);
@@ -273,17 +278,25 @@ export class UserController extends AbstractHttpController {
             super.sendResult(response, Ok<boolean>(res.value));
         }
     }
-    @Patch('todo/:id')
+    @Patch('todo/:todolistId/:todoId')
     @ApiTags('Todo')
     @ApiOperation({ summary: 'update one todo' })
+    @ApiConsumes('application/x-www-form-urlencoded')
     @ApiExtraModels(UpdateTodoResponse, StdResponse)
     @ApiStdResponse(UpdateTodoResponse)
     async updateTodo(
+        @Res() response: Response,
         @Headers('user') userId: string,
-        @Param('id') todoId: string,
-        @Body() body: UpdateTodoDto,
-    ) {
-        const res = await this.userService.updateTodo(todoId, body, userId);
+        @Param('todoId') todoId: string,
+        @Param('todolistId') todolistId: string,
+        @Body() body: UpdateTodoRequest,
+    ): Promise<UpdateTodoResponse> {
+        const res = await this.userService.updateTodo(
+            todoId,
+            todolistId,
+            body,
+            userId,
+        );
         if (res.isError()) {
             super.sendResult(response, res);
             return;
@@ -307,7 +320,10 @@ export class UserController extends AbstractHttpController {
     @ApiOperation({ summary: 'get user by id' })
     @ApiExtraModels(UserResponse, StdResponse)
     @ApiStdResponse(UserResponse)
-    async getUserById(@Res() response: Response, @Param('id') userId: string) {
+    async getUserById(
+        @Res() response: Response,
+        @Param('id') userId: string,
+    ): Promise<UserResponse> {
         const res = await this.userService.getUserById(userId);
         if (res.isError()) {
             super.sendResult(response, res);
@@ -342,14 +358,17 @@ export class UserController extends AbstractHttpController {
     async delteUserById(
         @Res() response: Response,
         @Param('id') userId: string,
-    ) {
+    ): Promise<DeleteUserResponse> {
         const res = await this.userService.deleteUserById(userId);
         if (res.isError()) {
             super.sendResult(response, res);
             return;
         }
         if (res.isOk()) {
-            super.sendResult(response, Ok<boolean>(res.value));
+            super.sendResult(
+                response,
+                Ok<DeleteUserResponse>({ success: res.value }),
+            );
         }
     }
     @Post()
@@ -358,7 +377,10 @@ export class UserController extends AbstractHttpController {
     @ApiConsumes('application/x-www-form-urlencoded')
     @ApiStdResponse(UserResponse)
     @ApiExtraModels(UserResponse, StdResponse)
-    async createUser(@Res() response: Response, @Body() body: UserRequest) {
+    async createUser(
+        @Res() response: Response,
+        @Body() body: UserRequest,
+    ): Promise<UserResponse> {
         const res = await this.userService.createUser({
             username: body.username,
             password: body.password,

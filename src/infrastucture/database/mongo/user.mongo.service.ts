@@ -17,34 +17,7 @@ export class UserMongoService implements IUserProvider {
         @InjectModel(User.name)
         private readonly userModel: Model<User>,
     ) {}
-    async getUserById(id: string): Promise<IUserEntity> {
-        const res = await this.userModel.findOne({
-            _id: new Types.ObjectId(id),
-        });
-        // if(!res) 
-        return User.toIUserEntity(res);
-    }
-
-    async getUser(query: FilterQuery<unknown>): Promise<IUserEntity> {
-        const res = await this.userModel.findOne(query);
-        return User.toIUserEntity(res);
-    }
-
-    async createUser(iUser: IUser): Promise<IUserEntity> {
-        const user = User.fromIUser(iUser);
-
-        const res = await this.userModel.create(user);
-
-        return User.toIUserEntity(res);
-    }
-
-    async deleteUserById(id: string): Promise<boolean> {
-        const res = await this.userModel.deleteOne({
-            _id: new Types.ObjectId(id),
-        });
-        return res.deletedCount > 1;
-    }
-
+    // ======================================TODO LIST ==============================================
     async createTodolist(
         iTodolist: Partial<ITodolist>,
         userId: string,
@@ -55,7 +28,6 @@ export class UserMongoService implements IUserProvider {
             { _id: new Types.ObjectId(userId) },
             { $push: { todoLists: todolist } },
         );
-        console.log(res);
 
         if (!res)
             throw new InternalServerErrorException('create todolist failed');
@@ -98,9 +70,10 @@ export class UserMongoService implements IUserProvider {
             _id: new Types.ObjectId(userId),
             $pull: { todoLists: { _id: new Types.ObjectId(todolistId) } },
         });
-        return res.modifiedCount > 1;
+        return res.modifiedCount >= 1;
     }
 
+    // ======================================TODO  ==============================================
     async createTodo(
         iTodo: Partial<ITodo>,
         userId: string,
@@ -180,24 +153,68 @@ export class UserMongoService implements IUserProvider {
 
     async updateTodo(
         todoId: string,
+        todolistId: string,
         ITodo: Partial<ITodo>,
         userId: string,
     ): Promise<ITodoEntity> {
         const newTodo = Todo.fromITodo({ ...ITodo, id: todoId });
 
-        await this.userModel.findOneAndUpdate(
+        const res = await this.userModel.updateOne(
             {
                 _id: new Types.ObjectId(userId),
-                'todoLists.todos._id': new Types.ObjectId(todoId),
             },
             {
-                $set: { 'todoLists.$.todos': newTodo },
+                $set: {
+                    'todoLists.$[list].todos.$[customData]': newTodo,
+                },
             },
             {
-                returnDocument: 'after',
+                multi: false,
+                upsert: false,
+                arrayFilters: [
+                    {
+                        'list._id': {
+                            $eq: new Types.ObjectId(todolistId),
+                        },
+                    },
+                    {
+                        'customData._id': {
+                            $eq: new Types.ObjectId(todoId),
+                        },
+                    },
+                ],
             },
         );
 
         return Todo.toITodoEntity(newTodo);
+    }
+
+    // ======================================USER  ==============================================
+    async getUserById(id: string): Promise<IUserEntity> {
+        const res = await this.userModel.findOne({
+            _id: new Types.ObjectId(id),
+        });
+        // if(!res)
+        return User.toIUserEntity(res);
+    }
+
+    async getUser(query: FilterQuery<unknown>): Promise<IUserEntity> {
+        const res = await this.userModel.findOne(query);
+        return User.toIUserEntity(res);
+    }
+
+    async createUser(iUser: IUser): Promise<IUserEntity> {
+        const user = User.fromIUser(iUser);
+
+        const res = await this.userModel.create(user);
+
+        return User.toIUserEntity(res);
+    }
+
+    async deleteUserById(id: string): Promise<boolean> {
+        const res = await this.userModel.deleteOne({
+            _id: new Types.ObjectId(id),
+        });
+        return res.deletedCount >= 1;
     }
 }

@@ -1,2 +1,7 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export class DeleteTodolistRequest {}
-export class DeleteTodolistResponse {}
+export class DeleteTodolistResponse {
+    @ApiProperty()
+    success: boolean;
+}

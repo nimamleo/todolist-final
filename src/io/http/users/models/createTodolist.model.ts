@@ -1,11 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, Length } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, length } from 'class-validator';
 import { UserResponseTodolits } from './createUser.model';
+import {
+    Must,
+    NotNull,
+} from '../../../../common/validation/custom-validation/must-sync.rule';
 
 export class CreateTodolistDto {
-    @IsString()
-    @Length(3, 20)
     @ApiProperty()
+    @IsNotEmpty()
+    @Must((x) => length(x, 6), NotNull, {
+        message: 'listTitle length must be more than 3',
+    })
     listTitle: string;
 }
 
@@ -16,17 +22,6 @@ export class TodolistResponse {
     listTitle: string;
     @ApiProperty()
     createdAt: string;
-    @ApiProperty({ type: () => TodolistResponseTodoItem })
-    todos: TodolistResponseTodoItem[];
-}
-
-export class TodolistResponseTodoItem {
-    @ApiProperty()
-    id: string;
-    @ApiProperty()
-    title: string;
-    @ApiProperty()
-    description: string;
-    @ApiProperty()
-    createdAt: string;
+    @ApiProperty({ isArray: true })
+    todos: [];
 }

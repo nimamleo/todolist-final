@@ -1,4 +1,7 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export class DeleteUserRequest {}
 export class DeleteUserResponse {
-    data: boolean;
+    @ApiProperty()
+    success: boolean;
 }

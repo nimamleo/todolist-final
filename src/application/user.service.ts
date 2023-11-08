@@ -18,35 +18,7 @@ export class UserService {
         private readonly userRepository: IUserProvider,
     ) {}
 
-    @HandleError
-    async getUserById(id: string): Promise<Result<IUserEntity>> {
-        const res = await this.userRepository.getUserById(id);
-        if (!res) {
-            return Err('user not found');
-        }
-        return Ok(res);
-    }
-
-    @HandleError
-    async createUser(userBody: Partial<IUser>): Promise<Result<IUserEntity>> {
-        const res = await this.userRepository.createUser(userBody);
-        if (!res) {
-            return Err('create user failed');
-        }
-        return Ok(res);
-    }
-    @HandleError
-    async getUser(query: FilterQuery<unknown>) {
-        const res = await this.userRepository.getUser(query);
-    }
-    @HandleError
-    async deleteUserById(id: string): Promise<Result<boolean>> {
-        const res = await this.userRepository.deleteUserById(id);
-        if (!res) {
-            return Err('can not delete user with given id');
-        }
-        return Ok(res);
-    }
+    // ======================================TODO LIST ==============================================
     @HandleError
     async createTodolist(
         todolistBody: Partial<ITodolist>,
@@ -102,7 +74,7 @@ export class UserService {
         }
         return Ok(res);
     }
-
+    // ======================================TODO ==============================================
     @HandleError
     async createTodo(
         todoBody: Partial<ITodo>,
@@ -156,12 +128,48 @@ export class UserService {
     @HandleError
     async updateTodo(
         todoId: string,
+        todolistId: string,
         ITodo: Partial<ITodo>,
         userId: string,
     ): Promise<Result<ITodoEntity>> {
-        const res = await this.userRepository.updateTodo(todoId, ITodo, userId);
+        const res = await this.userRepository.updateTodo(
+            todoId,
+            todolistId,
+            ITodo,
+            userId,
+        );
         if (!res) {
             return Err('update todo failed');
+        }
+        return Ok(res);
+    }
+    // ======================================  USER  ==============================================
+    @HandleError
+    async getUserById(id: string): Promise<Result<IUserEntity>> {
+        const res = await this.userRepository.getUserById(id);
+        if (!res) {
+            return Err('user not found');
+        }
+        return Ok(res);
+    }
+
+    @HandleError
+    async createUser(userBody: Partial<IUser>): Promise<Result<IUserEntity>> {
+        const res = await this.userRepository.createUser(userBody);
+        if (!res) {
+            return Err('create user failed');
+        }
+        return Ok(res);
+    }
+    @HandleError
+    async getUser(query: FilterQuery<unknown>) {
+        const res = await this.userRepository.getUser(query);
+    }
+    @HandleError
+    async deleteUserById(id: string): Promise<Result<boolean>> {
+        const res = await this.userRepository.deleteUserById(id);
+        if (!res) {
+            return Err('can not delete user with given id');
         }
         return Ok(res);
     }
