@@ -27,6 +27,7 @@ export class UserService {
         return Ok(res);
     }
 
+    @HandleError
     async createUser(userBody: Partial<IUser>): Promise<Result<IUserEntity>> {
         const res = await this.userRepository.createUser(userBody);
         if (!res) {
@@ -34,10 +35,11 @@ export class UserService {
         }
         return Ok(res);
     }
-
+    @HandleError
     async getUser(query: FilterQuery<unknown>) {
         const res = await this.userRepository.getUser(query);
     }
+    @HandleError
     async deleteUserById(id: string): Promise<Result<boolean>> {
         const res = await this.userRepository.deleteUserById(id);
         if (!res) {
@@ -45,6 +47,7 @@ export class UserService {
         }
         return Ok(res);
     }
+    @HandleError
     async createTodolist(
         todolistBody: Partial<ITodolist>,
         userId: string,
@@ -59,6 +62,7 @@ export class UserService {
         return Ok(res);
     }
 
+    @HandleError
     async getAllTodolist(userId: string): Promise<Result<ITodolistEntity[]>> {
         const res = await this.userRepository.getAllTodolist(userId);
         if (!res) {
@@ -67,6 +71,7 @@ export class UserService {
         return Ok(res);
     }
 
+    @HandleError
     async getOneTodoListById(
         userId: string,
         todolistId: string,
@@ -79,10 +84,11 @@ export class UserService {
         return Ok(res);
     }
 
+    @HandleError
     async getOneTodoList(userId: string, query: FilterQuery<unknown>) {
         const res = await this.userRepository.getOneTodoList(query, userId);
     }
-
+    @HandleError
     async deleteTodolist(
         userId: string,
         todolistId: string,
@@ -97,6 +103,7 @@ export class UserService {
         return Ok(res);
     }
 
+    @HandleError
     async createTodo(
         todoBody: Partial<ITodo>,
         todolistId: string,
@@ -113,6 +120,7 @@ export class UserService {
         return Ok(res);
     }
 
+    @HandleError
     async getOneTodo(
         todoId: string,
         userId: string,
@@ -124,6 +132,7 @@ export class UserService {
         return Ok(res);
     }
 
+    @HandleError
     async getAllTodo(
         userId: string,
         todolistId: string,
@@ -135,6 +144,7 @@ export class UserService {
         return Ok(res);
     }
 
+    @HandleError
     async deleteTodo(todoId: string, userId: string): Promise<Result<boolean>> {
         const res = await this.userRepository.deleteTodo(todoId, userId);
         if (!res) {
@@ -143,6 +153,7 @@ export class UserService {
         return Ok(res);
     }
 
+    @HandleError
     async updateTodo(
         todoId: string,
         ITodo: Partial<ITodo>,

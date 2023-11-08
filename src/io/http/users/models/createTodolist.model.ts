@@ -1,9 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, Length } from 'class-validator';
-import { User } from 'src/infrastucture/database/mongo/schema/user.schema';
-import { ITodoEntity } from 'src/model/todo.model';
-import { ITodolistEntity } from 'src/model/todolist.model';
-import { TodoResponse } from './todo-operation';
+import { UserResponseTodolits } from './createUser.model';
 
 export class CreateTodolistDto {
     @IsString()
@@ -13,15 +10,23 @@ export class CreateTodolistDto {
 }
 
 export class TodolistResponse {
+    @ApiProperty()
     id: string;
+    @ApiProperty()
     listTitle: string;
+    @ApiProperty()
     createdAt: string;
+    @ApiProperty({ type: () => TodolistResponseTodoItem })
     todos: TodolistResponseTodoItem[];
 }
 
 export class TodolistResponseTodoItem {
+    @ApiProperty()
     id: string;
+    @ApiProperty()
     title: string;
+    @ApiProperty()
     description: string;
+    @ApiProperty()
     createdAt: string;
 }
