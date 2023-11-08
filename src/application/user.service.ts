@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
 import { HandleError } from 'src/common/decorator/handler-error.decorator';
 import { GenericErrorCode } from 'src/common/errors/generic-error';
 import { Err, Ok, Result } from 'src/common/result';
@@ -81,6 +81,13 @@ export class UserService {
         todolistId: string,
         userId: string,
     ): Promise<Result<ITodoEntity>> {
+        const IsTodolistExists = await this.userRepository.getOneTodoListById(
+            todolistId,
+            userId,
+        );
+        if (IsTodolistExists) {
+            return Err('todolist does not exist');
+        }
         const res = await this.userRepository.createTodo(
             todoBody,
             userId,
@@ -109,6 +116,13 @@ export class UserService {
         userId: string,
         todolistId: string,
     ): Promise<Result<ITodoEntity[]>> {
+        const IsTodolistExists = await this.userRepository.getOneTodoListById(
+            todolistId,
+            userId,
+        );
+        if (IsTodolistExists) {
+            return Err('todolist does not exist');
+        }
         const res = await this.userRepository.getAllTodo(userId, todolistId);
         if (!res) {
             return Err('todos not found', GenericErrorCode.NOT_FOUND);
@@ -132,6 +146,13 @@ export class UserService {
         ITodo: Partial<ITodo>,
         userId: string,
     ): Promise<Result<ITodoEntity>> {
+        const IsTodolistExists = await this.userRepository.getOneTodoListById(
+            todolistId,
+            userId,
+        );
+        if (IsTodolistExists) {
+            return Err('todolist does not exist');
+        }
         const res = await this.userRepository.updateTodo(
             todoId,
             todolistId,

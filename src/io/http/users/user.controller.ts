@@ -37,7 +37,7 @@ import { DeleteUserResponse } from './models/deleteUser.model';
 import { DeleteTodoResponse } from './models/deleteTodo.model';
 import { DeleteTodolistResponse } from './models/deleteTodolist.model';
 import {
-    CreateTodolistDto,
+    TodolistRequest,
     TodolistResponse,
 } from './models/createTodolist.model';
 import { StdResponse } from '../../../common/std-response/std-response';
@@ -52,12 +52,11 @@ export class UserController extends AbstractHttpController {
     @Post('todolist')
     @ApiTags('Todolist')
     @ApiOperation({ summary: 'create todolist' })
-    @ApiConsumes('application/x-www-form-urlencoded')
     @ApiExtraModels(TodolistResponse, StdResponse)
     @ApiStdResponse(TodolistResponse)
     async createTodolist(
         @Res() response: Response,
-        @Body() body: CreateTodolistDto,
+        @Body() body: TodolistRequest,
         @Headers('user') userId: string,
     ) {
         const res = await this.userService.createTodolist(
@@ -175,7 +174,6 @@ export class UserController extends AbstractHttpController {
     @Post('todo/:id')
     @ApiTags('Todo')
     @ApiOperation({ summary: 'create todo' })
-    @ApiConsumes('application/x-www-form-urlencoded')
     @ApiExtraModels(CreateTodoResponse, StdResponse)
     @ApiStdResponse(CreateTodoResponse)
     async createTodo(
@@ -281,7 +279,6 @@ export class UserController extends AbstractHttpController {
     @Patch('todo/:todolistId/:todoId')
     @ApiTags('Todo')
     @ApiOperation({ summary: 'update one todo' })
-    @ApiConsumes('application/x-www-form-urlencoded')
     @ApiExtraModels(UpdateTodoResponse, StdResponse)
     @ApiStdResponse(UpdateTodoResponse)
     async updateTodo(
@@ -374,7 +371,6 @@ export class UserController extends AbstractHttpController {
     @Post()
     @ApiTags('Users')
     @ApiOperation({ summary: 'create user' })
-    @ApiConsumes('application/x-www-form-urlencoded')
     @ApiStdResponse(UserResponse)
     @ApiExtraModels(UserResponse, StdResponse)
     async createUser(

@@ -6,7 +6,7 @@ import {
     NotNull,
 } from '../../../../common/validation/custom-validation/must-sync.rule';
 
-export class CreateTodolistDto {
+export class TodolistRequest {
     @ApiProperty()
     @IsNotEmpty()
     @Must((x) => length(x, 6), NotNull, {

@@ -1,6 +1,3 @@
-import { CreateAuthDto } from 'src/io/http/validation/auth/create-auth.dto';
-import { IUserEntity } from 'src/model/user.model';
-
 export interface IBcryptReader {
     compare(passwordString: string, hashPassword: string): Promise<boolean>;
 }
