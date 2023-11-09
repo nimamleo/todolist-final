@@ -12,8 +12,6 @@ import { Todo } from './schema/todo.scheam';
 @Injectable()
 export class UserMongoService implements IUserProvider {
     constructor(
-        @InjectModel(TodoList.name)
-        private readonly todolistModel: Model<TodoList>,
         @InjectModel(User.name)
         private readonly userModel: Model<User>,
     ) {}

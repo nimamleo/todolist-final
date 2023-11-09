@@ -28,7 +28,6 @@ export class Todo {
         todo.description = iTodoEntity.description;
         todo.createdAt = iTodoEntity.createdAt || new Date();
         todo.updatedAt = new Date();
-        console.log(todo);
 
         return todo;
     }
