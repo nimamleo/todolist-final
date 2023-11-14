@@ -8,9 +8,11 @@ import {
     Headers,
     Patch,
     Res,
+    UseGuards,
 } from '@nestjs/common';
 import { UserService } from 'src/application/user.service';
 import {
+    ApiBearerAuth,
     ApiConsumes,
     ApiExtraModels,
     ApiOperation,
@@ -41,8 +43,12 @@ import {
     TodolistResponse,
 } from './models/createTodolist.model';
 import { StdResponse } from '../../../common/std-response/std-response';
+import { SignUpRequest, SignUpResponse } from './models/signUp.model';
+import { SignInRequest, SignInResponse } from './models/signIn.model';
+import { JwtAuthGuard } from '../../../infrastucture/Auth/JWT/guards/jwt.guard';
 
 @Controller('users')
+
 // @ApiExtraModels(StdResponse<>)
 export class UserController extends AbstractHttpController {
     constructor(private readonly userService: UserService) {
@@ -50,6 +56,8 @@ export class UserController extends AbstractHttpController {
     }
     // ======================================TODO LIST===========================================
     @Post('todolist')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiTags('Todolist')
     @ApiOperation({ summary: 'create todolist' })
     @ApiExtraModels(TodolistResponse, StdResponse)
@@ -80,6 +88,8 @@ export class UserController extends AbstractHttpController {
         );
     }
     @Get('todolist')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiTags('Todolist')
     @ApiOperation({ summary: 'get all todolist' })
     @ApiExtraModels(GetAllTodolistsResponse, StdResponse)
@@ -115,6 +125,8 @@ export class UserController extends AbstractHttpController {
     }
 
     @Get('todolist/:id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiTags('Todolist')
     @ApiOperation({ summary: 'get todolist by id' })
     @ApiExtraModels(GetOneTodoListResponse, StdResponse)
@@ -152,6 +164,8 @@ export class UserController extends AbstractHttpController {
     }
 
     @Delete('todolist/:id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiTags('Todolist')
     @ApiOperation({ summary: 'delete todolist by id' })
     @ApiExtraModels(DeleteTodolistResponse, StdResponse)
@@ -172,6 +186,8 @@ export class UserController extends AbstractHttpController {
 
     // ======================================TODO ==============================================
     @Post('todo/:id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiTags('Todo')
     @ApiOperation({ summary: 'create todo' })
     @ApiExtraModels(CreateTodoResponse, StdResponse)
@@ -202,6 +218,8 @@ export class UserController extends AbstractHttpController {
     }
 
     @Get('todo/todos/:todolistId')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiTags('Todo')
     @ApiOperation({ summary: 'get all todo' })
     @ApiExtraModels(GetAllTodoResponse, StdResponse)
@@ -231,6 +249,8 @@ export class UserController extends AbstractHttpController {
         }
     }
     @Get('todo/:id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiTags('Todo')
     @ApiOperation({ summary: 'get one todo' })
     @ApiExtraModels(GetOneTodoResponse, StdResponse)
@@ -258,6 +278,8 @@ export class UserController extends AbstractHttpController {
         }
     }
     @Delete('todo/:id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiTags('Todo')
     @ApiOperation({ summary: 'delete one todo' })
     @ApiExtraModels(DeleteTodoResponse, StdResponse)
@@ -277,6 +299,8 @@ export class UserController extends AbstractHttpController {
         }
     }
     @Patch('todo/:todolistId/:todoId')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiTags('Todo')
     @ApiOperation({ summary: 'update one todo' })
     @ApiExtraModels(UpdateTodoResponse, StdResponse)
@@ -313,6 +337,8 @@ export class UserController extends AbstractHttpController {
     // ======================================USER ==============================================
 
     @Get(':id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiTags('Users')
     @ApiOperation({ summary: 'get user by id' })
     @ApiExtraModels(UserResponse, StdResponse)
@@ -348,6 +374,8 @@ export class UserController extends AbstractHttpController {
     }
 
     @Delete(':id')
+    @UseGuards(new JwtAuthGuard(true))
+    @ApiBearerAuth()
     @ApiTags('Users')
     @ApiOperation({ summary: 'delete user by id' })
     @ApiExtraModels(DeleteUserResponse, StdResponse)
@@ -370,6 +398,8 @@ export class UserController extends AbstractHttpController {
     }
     @Post()
     @ApiTags('Users')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiOperation({ summary: 'create user' })
     @ApiStdResponse(UserResponse)
     @ApiExtraModels(UserResponse, StdResponse)
@@ -406,5 +436,59 @@ export class UserController extends AbstractHttpController {
                 }),
             );
         }
+    }
+    // ======================================Auth ==============================================
+    @Post('auth/signin')
+    @ApiTags('Auth')
+    @ApiOperation({ summary: 'signIn' })
+    @ApiExtraModels(SignInResponse, StdResponse)
+    @ApiStdResponse(SignInResponse)
+    async siginIn(
+        @Res() response: Response,
+        @Body() body: SignInRequest,
+    ): Promise<SignInResponse> {
+        const res = await this.userService.signIn(body.username, body.password);
+        console.log({ res });
+        if (res.isError()) {
+            super.sendResult(response, res);
+            return;
+        }
+        if (res.isOk()) {
+            super.sendResult(
+                response,
+                Ok<SignInResponse>({
+                    token: res.value,
+                }),
+            );
+        }
+        return;
+    }
+    @Post('auth/siginup')
+    @ApiTags('Auth')
+    @ApiOperation({ summary: 'signUp' })
+    @ApiExtraModels(SignUpResponse, StdResponse)
+    @ApiStdResponse(SignUpResponse)
+    async siginUp(
+        @Res() response: Response,
+        @Body() body: SignUpRequest,
+    ): Promise<SignUpResponse> {
+        const res = await this.userService.signUp(body.username, body.password);
+        console.log({ res });
+        if (res.isError()) {
+            super.sendResult(response, res);
+            return;
+        }
+        if (res.isOk()) {
+            super.sendResult(
+                response,
+                Ok<SignUpResponse>({
+                    username: res.value.username,
+                    id: res.value.id,
+                    createdAt: res.value.createdAt.toISOString(),
+                    token: res.value.token,
+                }),
+            );
+        }
+        return;
     }
 }

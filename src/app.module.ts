@@ -5,12 +5,16 @@ import { httpConfigLoader } from './io/http/config/http.config';
 import { ApplicationModule } from './application/application.module';
 import { mongoConfigLoader } from './infrastucture/database/mongo/mongo-db.config';
 import { DatabaseModule } from './infrastucture/database/database.module';
+import { StorageModule } from './infrastucture/storage/storage.module';
+import { AuthModule } from './infrastucture/Auth/auth.module';
 
 @Module({
     imports: [
         ApplicationModule,
         IoModule,
         DatabaseModule,
+        StorageModule,
+        AuthModule,
         ConfigModule.forRoot({
             cache: true,
             load: [httpConfigLoader, mongoConfigLoader],

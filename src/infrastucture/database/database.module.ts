@@ -13,7 +13,6 @@ import { ASSET_DATABASE_PROVIDER } from './provider/asset.provider';
     imports: [
         MongooseModule.forFeature([
             { name: User.name, schema: UserSchema },
-            { name: TodoList.name, schema: TodoListSchema },
             { name: File.name, schema: FileSchema },
         ]),
         MongooseModule.forRootAsync({

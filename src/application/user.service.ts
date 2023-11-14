@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { FilterQuery, Types } from 'mongoose';
+import { FilterQuery } from 'mongoose';
 import { HandleError } from 'src/common/decorator/handler-error.decorator';
 import { GenericErrorCode } from 'src/common/errors/generic-error';
 import { Err, Ok, Result } from 'src/common/result';
@@ -9,13 +9,20 @@ import {
 } from 'src/infrastucture/database/provider/user.provider';
 import { ITodo, ITodoEntity } from 'src/model/todo.model';
 import { ITodolist, ITodolistEntity } from 'src/model/todolist.model';
-import { IUser, IUserEntity } from 'src/model/user.model';
+import { INewUserEntity, IUser, IUserEntity } from 'src/model/user.model';
+import {
+    AUTH_JWT_PROVIDER,
+    IAuthProvider,
+} from '../infrastucture/Auth/provider/auth.provider';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
     constructor(
         @Inject(USER_DATABASE_PROVIDER)
         private readonly userRepository: IUserProvider,
+        @Inject(AUTH_JWT_PROVIDER)
+        private readonly authService: IAuthProvider,
     ) {}
 
     // ======================================TODO LIST ==============================================
@@ -60,6 +67,7 @@ export class UserService {
     async getOneTodoList(userId: string, query: FilterQuery<unknown>) {
         const res = await this.userRepository.getOneTodoList(query, userId);
     }
+
     @HandleError
     async deleteTodolist(
         userId: string,
@@ -74,6 +82,7 @@ export class UserService {
         }
         return Ok(res);
     }
+
     // ======================================TODO ==============================================
     @HandleError
     async createTodo(
@@ -164,6 +173,7 @@ export class UserService {
         }
         return Ok(res);
     }
+
     // ======================================  USER  ==============================================
     @HandleError
     async getUserById(id: string): Promise<Result<IUserEntity>> {
@@ -182,10 +192,12 @@ export class UserService {
         }
         return Ok(res);
     }
+
     @HandleError
     async getUser(query: FilterQuery<unknown>) {
         const res = await this.userRepository.getUser(query);
     }
+
     @HandleError
     async deleteUserById(id: string): Promise<Result<boolean>> {
         const res = await this.userRepository.deleteUserById(id);
@@ -193,5 +205,59 @@ export class UserService {
             return Err('can not delete user with given id');
         }
         return Ok(res);
+    } // ======================================  AUTH  ==============================================
+    @HandleError
+    async signIn(username: string, password: string): Promise<Result<string>> {
+        const user = await this.userRepository.getUser({ username });
+        if (!user) {
+            return Err('credential not valid');
+        }
+        const comparePassword = await bcrypt.compare(password, user.password);
+        if (!comparePassword) return Err('credential not valid');
+        const tokenRes = await this.authService.signInToken(username, 'user');
+        if (tokenRes.isError())
+            return Err('token did not generate', GenericErrorCode.UNAUTHORIZED);
+        console.log(tokenRes);
+        return Ok(tokenRes.value);
+    }
+
+    @HandleError
+    async signUp(
+        username: string,
+        password: string,
+    ): Promise<Result<INewUserEntity>> {
+        const user = await this.userRepository.getUser({ username: username });
+        if (user) {
+            return Err('this user already exists');
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = await this.userRepository.createUser({
+            username: username,
+            password: hashedPassword,
+        });
+        const res = await this.authService.signInToken(username, 'user');
+        return Ok({
+            id: newUser.id,
+            username: newUser.username,
+            password: hashedPassword,
+            todoLists: newUser.todoLists,
+            token: res.value,
+            updatedAt: newUser.updatedAt,
+            createdAt: newUser.createdAt,
+        });
+    }
+
+    @HandleError
+    async generateToken(user: IUser): Promise<Result<string>> {
+        const tokenRes = await this.authService.signInToken(
+            user.username,
+            'user',
+        );
+
+        if (tokenRes.isError()) {
+            return Err(tokenRes.err);
+        }
+
+        return Ok(tokenRes.value);
     }
 }

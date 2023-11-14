@@ -9,3 +9,6 @@ export interface IUser {
 }
 
 export interface IUserEntity extends IUser, IEntity, IDated {}
+export interface INewUserEntity extends IUser, IEntity, IDated {
+    token: string;
+}

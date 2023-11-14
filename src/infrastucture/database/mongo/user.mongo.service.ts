@@ -39,7 +39,6 @@ export class UserMongoService implements IUserProvider {
             },
             { todoLists: 1, _id: 0 },
         );
-        console.log(res);
 
         return res.todoLists.map((todolist) =>
             TodoList.toITodoListEntity(todolist),
