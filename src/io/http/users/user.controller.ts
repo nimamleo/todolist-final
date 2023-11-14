@@ -4,21 +4,19 @@ import {
     Delete,
     Get,
     Param,
-    Post,
-    Headers,
     Patch,
+    Post,
     Res,
     UseGuards,
 } from '@nestjs/common';
 import { UserService } from 'src/application/user.service';
 import {
     ApiBearerAuth,
-    ApiConsumes,
     ApiExtraModels,
     ApiOperation,
     ApiTags,
 } from '@nestjs/swagger';
-import { response, Response } from 'express';
+import { Response } from 'express';
 import { AbstractHttpController } from '../../../common/abstract-http.controller';
 import { Ok } from 'src/common/result';
 import { GetAllTodolistsResponse } from './models/getAllTodolists.model';
@@ -46,6 +44,11 @@ import { StdResponse } from '../../../common/std-response/std-response';
 import { SignUpRequest, SignUpResponse } from './models/signUp.model';
 import { SignInRequest, SignInResponse } from './models/signIn.model';
 import { JwtAuthGuard } from '../../../infrastucture/Auth/JWT/guards/jwt.guard';
+import { GetUser } from '../../../common/decorator/get-user.decorator';
+import { IUserEntity } from '../../../model/user.model';
+import { Roles } from '../../../common/decorator/roles.decorator';
+import { Role } from '../../../common/enum/role.enum';
+import { RoleGuard } from '../../../common/guard/role.guard';
 
 @Controller('users')
 
@@ -54,9 +57,9 @@ export class UserController extends AbstractHttpController {
     constructor(private readonly userService: UserService) {
         super();
     }
-    // ======================================TODO LIST===========================================
+    // ======================================  TODO LIST  ===========================================
     @Post('todolist')
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(new JwtAuthGuard(true))
     @ApiBearerAuth()
     @ApiTags('Todolist')
     @ApiOperation({ summary: 'create todolist' })
@@ -65,13 +68,14 @@ export class UserController extends AbstractHttpController {
     async createTodolist(
         @Res() response: Response,
         @Body() body: TodolistRequest,
-        @Headers('user') userId: string,
+        @GetUser() user: IUserEntity,
     ) {
+        console.log(user);
         const res = await this.userService.createTodolist(
             {
                 listTitle: body.listTitle,
             },
-            userId,
+            user.id,
         );
         if (res.isError()) {
             super.sendResult(response, res);
@@ -96,9 +100,9 @@ export class UserController extends AbstractHttpController {
     @ApiStdResponse(GetAllTodolistsResponse)
     async getAllTodolist(
         @Res() response: Response,
-        @Headers('user') userId: string,
+        @GetUser() user: IUserEntity,
     ) {
-        const res = await this.userService.getAllTodolist(userId);
+        const res = await this.userService.getAllTodolist(user.id);
         if (res.isError()) {
             super.sendResult(response, res);
             return;
@@ -133,11 +137,11 @@ export class UserController extends AbstractHttpController {
     @ApiStdResponse(GetOneTodoListResponse)
     async getTodoListById(
         @Res() response: Response,
-        @Headers('user') userId: string,
+        @GetUser() user: IUserEntity,
         @Param('id') todolistId: string,
     ) {
         const res = await this.userService.getOneTodoListById(
-            userId,
+            user.id,
             todolistId,
         );
 
@@ -172,10 +176,10 @@ export class UserController extends AbstractHttpController {
     @ApiStdResponse(DeleteTodolistResponse)
     async deleteTodoListById(
         @Res() response: Response,
-        @Headers('user') userId: string,
+        @GetUser() user: IUserEntity,
         @Param('id') todolistId: string,
     ) {
-        const res = await this.userService.deleteTodolist(userId, todolistId);
+        const res = await this.userService.deleteTodolist(user.id, todolistId);
         if (res.isError()) {
             super.sendResult(response, res);
         }
@@ -195,10 +199,14 @@ export class UserController extends AbstractHttpController {
     async createTodo(
         @Res() response: Response,
         @Body() body: CreateTodoRequest,
-        @Headers('user') userId: string,
+        @GetUser() user: IUserEntity,
         @Param('id') todolistId: string,
     ): Promise<CreateTodoResponse> {
-        const res = await this.userService.createTodo(body, todolistId, userId);
+        const res = await this.userService.createTodo(
+            body,
+            todolistId,
+            user.id,
+        );
         console.log({ res });
         if (res.isError()) {
             super.sendResult(response, res);
@@ -226,10 +234,10 @@ export class UserController extends AbstractHttpController {
     @ApiStdResponse(GetAllTodoResponse)
     async getAllTodo(
         @Res() response: Response,
-        @Headers('user') userId: string,
+        @GetUser() user: IUserEntity,
         @Param('todolistId') todolistId: string,
     ): Promise<GetAllTodoResponse> {
-        const res = await this.userService.getAllTodo(userId, todolistId);
+        const res = await this.userService.getAllTodo(user.id, todolistId);
         if (res.isError()) {
             super.sendResult(response, res);
             return;
@@ -257,10 +265,10 @@ export class UserController extends AbstractHttpController {
     @ApiStdResponse(GetOneTodoResponse)
     async getOneTodo(
         @Res() response: Response,
-        @Headers('user') userId: string,
+        @GetUser() user: IUserEntity,
         @Param('id') todoId: string,
     ): Promise<GetOneTodoResponse> {
-        const res = await this.userService.getOneTodo(todoId, userId);
+        const res = await this.userService.getOneTodo(todoId, user.id);
         if (res.isError()) {
             super.sendResult(response, res);
             return;
@@ -286,10 +294,10 @@ export class UserController extends AbstractHttpController {
     @ApiStdResponse(DeleteTodoResponse)
     async deleteOneTodo(
         @Res() response: Response,
-        @Headers('user') userId: string,
+        @GetUser() user: IUserEntity,
         @Param('id') todoId: string,
     ): Promise<DeleteTodoResponse> {
-        const res = await this.userService.deleteTodo(todoId, userId);
+        const res = await this.userService.deleteTodo(todoId, user.id);
         if (res.isError()) {
             super.sendResult(response, res);
             return;
@@ -307,7 +315,7 @@ export class UserController extends AbstractHttpController {
     @ApiStdResponse(UpdateTodoResponse)
     async updateTodo(
         @Res() response: Response,
-        @Headers('user') userId: string,
+        @GetUser() user: IUserEntity,
         @Param('todoId') todoId: string,
         @Param('todolistId') todolistId: string,
         @Body() body: UpdateTodoRequest,
@@ -316,7 +324,7 @@ export class UserController extends AbstractHttpController {
             todoId,
             todolistId,
             body,
-            userId,
+            user.id,
         );
         if (res.isError()) {
             super.sendResult(response, res);
@@ -337,7 +345,8 @@ export class UserController extends AbstractHttpController {
     // ======================================USER ==============================================
 
     @Get(':id')
-    @UseGuards(JwtAuthGuard)
+    @Roles(Role.USER)
+    @UseGuards(JwtAuthGuard, RoleGuard)
     @ApiBearerAuth()
     @ApiTags('Users')
     @ApiOperation({ summary: 'get user by id' })
@@ -371,6 +380,7 @@ export class UserController extends AbstractHttpController {
                 })),
             }),
         );
+        return;
     }
 
     @Delete(':id')
@@ -380,7 +390,7 @@ export class UserController extends AbstractHttpController {
     @ApiOperation({ summary: 'delete user by id' })
     @ApiExtraModels(DeleteUserResponse, StdResponse)
     @ApiStdResponse(DeleteUserResponse)
-    async delteUserById(
+    async deleteUserById(
         @Res() response: Response,
         @Param('id') userId: string,
     ): Promise<DeleteUserResponse> {
@@ -438,17 +448,16 @@ export class UserController extends AbstractHttpController {
         }
     }
     // ======================================Auth ==============================================
-    @Post('auth/signin')
+    @Post('auth/signIn')
     @ApiTags('Auth')
     @ApiOperation({ summary: 'signIn' })
     @ApiExtraModels(SignInResponse, StdResponse)
     @ApiStdResponse(SignInResponse)
-    async siginIn(
+    async signIn(
         @Res() response: Response,
         @Body() body: SignInRequest,
     ): Promise<SignInResponse> {
         const res = await this.userService.signIn(body.username, body.password);
-        console.log({ res });
         if (res.isError()) {
             super.sendResult(response, res);
             return;
@@ -463,17 +472,16 @@ export class UserController extends AbstractHttpController {
         }
         return;
     }
-    @Post('auth/siginup')
+    @Post('auth/signUp')
     @ApiTags('Auth')
     @ApiOperation({ summary: 'signUp' })
     @ApiExtraModels(SignUpResponse, StdResponse)
     @ApiStdResponse(SignUpResponse)
-    async siginUp(
+    async signUp(
         @Res() response: Response,
         @Body() body: SignUpRequest,
     ): Promise<SignUpResponse> {
         const res = await this.userService.signUp(body.username, body.password);
-        console.log({ res });
         if (res.isError()) {
             super.sendResult(response, res);
             return;

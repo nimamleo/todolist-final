@@ -6,8 +6,6 @@ import {
     UploadedFiles,
 } from '@nestjs/common';
 import { ApiExtraModels, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ApiFile } from '../../../common/decorator/api-file.decorator';
-import { ApiFiles } from '../../../common/decorator/api-files.decorator';
 import { Filters } from '../../../common/validation/custom-validation/file-filter';
 import { AssetService } from '../../../application/asset.service';
 import { AbstractHttpController } from '../../../common/abstract-http.controller';
@@ -17,6 +15,8 @@ import { Response } from 'express';
 import { getMimeTypeFromArrayBuffer } from '../../../common/utils/fileMimeType-extractor';
 import { StdResponse } from '../../../common/std-response/std-response';
 import { ApiStdResponse } from '../../../common/ApiStdResponse';
+import { ApiFile } from '../../../common/swagger/api-file.decorator';
+import { ApiFiles } from '../../../common/swagger/api-files.decorator';
 
 @Controller('files')
 @ApiTags('files')

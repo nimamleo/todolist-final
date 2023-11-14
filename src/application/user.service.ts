@@ -15,6 +15,7 @@ import {
     IAuthProvider,
 } from '../infrastucture/Auth/provider/auth.provider';
 import * as bcrypt from 'bcrypt';
+import { Role } from '../common/enum/role.enum';
 
 @Injectable()
 export class UserService {
@@ -31,6 +32,7 @@ export class UserService {
         todolistBody: Partial<ITodolist>,
         userId: string,
     ): Promise<Result<ITodolistEntity>> {
+        console.log({ userId });
         const res = await this.userRepository.createTodolist(
             todolistBody,
             userId,
@@ -214,10 +216,7 @@ export class UserService {
         }
         const comparePassword = await bcrypt.compare(password, user.password);
         if (!comparePassword) return Err('credential not valid');
-        const tokenRes = await this.authService.signInToken(username, 'user');
-        if (tokenRes.isError())
-            return Err('token did not generate', GenericErrorCode.UNAUTHORIZED);
-        console.log(tokenRes);
+        const tokenRes = await this.generateToken(user);
         return Ok(tokenRes.value);
     }
 
@@ -234,12 +233,18 @@ export class UserService {
         const newUser = await this.userRepository.createUser({
             username: username,
             password: hashedPassword,
+            role: Role.USER,
         });
-        const res = await this.authService.signInToken(username, 'user');
+        const res = await this.authService.signToken(
+            newUser.id,
+            newUser.username,
+            Role.USER,
+        );
         return Ok({
             id: newUser.id,
             username: newUser.username,
             password: hashedPassword,
+            role: newUser.role,
             todoLists: newUser.todoLists,
             token: res.value,
             updatedAt: newUser.updatedAt,
@@ -248,10 +253,11 @@ export class UserService {
     }
 
     @HandleError
-    async generateToken(user: IUser): Promise<Result<string>> {
-        const tokenRes = await this.authService.signInToken(
+    async generateToken(user: IUserEntity): Promise<Result<string>> {
+        const tokenRes = await this.authService.signToken(
+            user.id,
             user.username,
-            'user',
+            Role.USER,
         );
 
         if (tokenRes.isError()) {

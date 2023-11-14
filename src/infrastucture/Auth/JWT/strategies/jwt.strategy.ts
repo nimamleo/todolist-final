@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -7,6 +7,9 @@ import {
     USER_DATABASE_PROVIDER,
 } from '../../../database/provider/user.provider';
 import { IUserPayload } from '../../../../common/interface/userPayload.interface';
+import { Err } from 'src/common/result';
+import { GenericErrorCode } from '../../../../common/errors/generic-error';
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     constructor(
@@ -25,7 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         const user = await this.userRepository.getUser({
             username: payload.username,
         });
-        if (!user) throw new NotFoundException('please login');
+        if (!user) return Err('please login', GenericErrorCode.UNAUTHORIZED);
 
         return user;
     }

@@ -14,20 +14,19 @@ export class AuthJwtService implements IAuthProvider {
     ) {}
 
     @HandleError
-    async signInToken(
-        // userId: string,
+    async signToken(
+        userId: string,
         username: string,
         type: string,
     ): Promise<Result<string>> {
         const token = this.jwtService.sign(
             {
-                sub: '123',
+                sub: userId,
                 username,
                 type,
             },
             { secret: this.configService.get('JWT_SECRET') },
         );
-        console.log(token);
         return Ok(token);
     }
 
