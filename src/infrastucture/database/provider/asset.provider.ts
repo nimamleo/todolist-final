@@ -3,8 +3,12 @@ import { Result } from '../../../common/result';
 
 export interface IAssetReader {}
 export interface IAssetWriter {
-    createFile(ifile: Partial<IFile>): Promise<Result<Partial<IFileEntity>>>;
+    createFile(
+        ifile: Partial<IFile>,
+        todoId: string,
+    ): Promise<Result<Partial<IFileEntity>>>;
     deleteFile(id: string): Promise<Result<boolean>>;
+    getFile(id: string): Promise<Result<Partial<IFileEntity>>>;
 }
 
 export const ASSET_DATABASE_PROVIDER = 'asset-database-provider';

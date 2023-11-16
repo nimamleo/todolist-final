@@ -1,11 +1,20 @@
 import {
     Controller,
+    Get,
+    Param,
     Post,
     Res,
+    StreamableFile,
     UploadedFile,
     UploadedFiles,
+    UseGuards,
 } from '@nestjs/common';
-import { ApiExtraModels, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+    ApiBearerAuth,
+    ApiExtraModels,
+    ApiOperation,
+    ApiTags,
+} from '@nestjs/swagger';
 import { Filters } from '../../../common/validation/custom-validation/file-filter';
 import { AssetService } from '../../../application/asset.service';
 import { AbstractHttpController } from '../../../common/abstract-http.controller';
@@ -17,6 +26,11 @@ import { StdResponse } from '../../../common/std-response/std-response';
 import { ApiStdResponse } from '../../../common/ApiStdResponse';
 import { ApiFile } from '../../../common/swagger/api-file.decorator';
 import { ApiFiles } from '../../../common/swagger/api-files.decorator';
+import { join } from 'path';
+import * as fs from 'fs';
+import { GetUser } from '../../../common/decorator/get-user.decorator';
+import { IUser, IUserEntity } from '../../../model/user.model';
+import { JwtAuthGuard } from '../../../infrastucture/Auth/JWT/guards/jwt.guard';
 
 @Controller('files')
 @ApiTags('files')
@@ -24,7 +38,7 @@ export class AssetController extends AbstractHttpController {
     constructor(private readonly assetService: AssetService) {
         super();
     }
-    @Post('upload')
+    @Post('upload/:id')
     @ApiOperation({ summary: 'upload file' })
     @ApiExtraModels(CreateFileResponse, StdResponse)
     @ApiStdResponse(CreateFileResponse)
@@ -35,16 +49,18 @@ export class AssetController extends AbstractHttpController {
         @Res() response: Response,
         @UploadedFile()
         file: Express.Multer.File,
+        @Param('id') todoId: string,
     ) {
-        const mimetype = await getMimeTypeFromArrayBuffer(file.buffer);
-        console.log(mimetype);
-        const res = await this.assetService.createFile({
-            fileName: file.originalname,
-            size: file.size,
-            mimetype: mimetype || '',
-            // mimetype: file.mimetype,
-            buffer: file.buffer,
-        });
+        // const mimetype = await getMimeTypeFromArrayBuffer(file.buffer);
+        const res = await this.assetService.createFile(
+            {
+                fileName: file.originalname,
+                size: file.size,
+                mimetype: file.mimetype,
+                buffer: file.buffer,
+            },
+            todoId,
+        );
         if (res.isOk()) {
             super.sendResult(
                 response,
@@ -60,9 +76,21 @@ export class AssetController extends AbstractHttpController {
         }
     }
 
-    @Post('uploads')
-    @ApiFiles('files', true)
-    uploadFiles(@UploadedFiles() files: Array<Express.Multer.File>) {
-        console.log(files);
+    @Get('serveImage/:id')
+    @ApiOperation({ summary: 'serve image' })
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    async serveImage(
+        @Param('id') imageId: string,
+        @GetUser() user: IUserEntity,
+        @Res({ passthrough: true }) response: Response,
+    ) {
+        const res = await this.assetService.serveImage(imageId, user.id);
+
+        response.set({
+            'Content-Type': res.value.mimetype,
+        });
+        const readStream = res.value.stream;
+        return new StreamableFile(readStream);
     }
 }

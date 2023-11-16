@@ -7,6 +7,7 @@ import { mongoConfigLoader } from './infrastucture/database/mongo/mongo-db.confi
 import { DatabaseModule } from './infrastucture/database/database.module';
 import { StorageModule } from './infrastucture/storage/storage.module';
 import { AuthModule } from './infrastucture/Auth/auth.module';
+import { CachingModule } from './infrastucture/cache/cache.module';
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { AuthModule } from './infrastucture/Auth/auth.module';
         DatabaseModule,
         StorageModule,
         AuthModule,
+        CachingModule,
         ConfigModule.forRoot({
             cache: true,
             load: [httpConfigLoader, mongoConfigLoader],

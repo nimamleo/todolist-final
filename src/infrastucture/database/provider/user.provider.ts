@@ -18,6 +18,10 @@ export interface IUserReader {
 export interface IUserWriter {
     createUser(iUser: Partial<IUser>): Promise<IUserEntity>;
     deleteUserById(id: string): Promise<boolean>;
+    updateUserRefreshToken(
+        userId: string,
+        refreshToken: string,
+    ): Promise<boolean>;
     createTodolist(
         iTodolist: Partial<ITodolist>,
         userId: string,

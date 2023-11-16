@@ -3,8 +3,9 @@ import { AuthJwtService } from './JWT/auth-jwt.service';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AUTH_JWT_PROVIDER } from './provider/auth.provider';
-import { JwtStrategy } from './JWT/strategies/jwt.strategy';
+import { AccessTokenStrategy } from './JWT/strategies/access-token.strategy';
 import { DatabaseModule } from '../database/database.module';
+import { RefreshTokenStrategy } from './JWT/strategies/refresh-token.strategy';
 
 @Module({
     imports: [
@@ -28,7 +29,8 @@ import { DatabaseModule } from '../database/database.module';
 
         JwtService,
         ConfigService,
-        JwtStrategy,
+        AccessTokenStrategy,
+        RefreshTokenStrategy,
     ],
     exports: [AUTH_JWT_PROVIDER],
 })

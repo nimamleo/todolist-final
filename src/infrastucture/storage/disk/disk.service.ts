@@ -23,6 +23,17 @@ export class DiskService implements IFileProvider {
 
         return Ok(await this.saveFile(file, uploadPath));
     }
+    serveImage(imagePath: string): Promise<Result<any>> {
+        return new Promise((resolve, reject) => {
+            try {
+                // const stream = fs.createReadStream(imagePath);
+                const stream = fs.createReadStream(imagePath);
+                resolve(Ok(stream));
+            } catch (e) {
+                reject(Err(e));
+            }
+        });
+    }
 
     deleteFile(filePath: string): Promise<Result<boolean>> {
         return new Promise((resolve, reject) => {

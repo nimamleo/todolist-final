@@ -1,14 +1,15 @@
 import { Result } from '../../../common/result';
 import { IUserEntity } from '../../../model/user.model';
+import { TokensInterface } from '../../../common/interface/tokens.interface';
 
 export interface IAuthProvider {
-    signToken(
+    signTokens(
         userId: string,
         username: string,
         type: string,
-    ): Promise<Result<string>>;
+    ): Promise<Result<TokensInterface>>;
 
-    verifyToken(username: string, password: string): Promise<Result<boolean>>;
+    verifyToken(refreshToken: string): Promise<Result<string>>;
 }
 
 export const AUTH_JWT_PROVIDER = 'auth-jwt-provider';

@@ -49,6 +49,11 @@ import { IUserEntity } from '../../../model/user.model';
 import { Roles } from '../../../common/decorator/roles.decorator';
 import { Role } from '../../../common/enum/role.enum';
 import { RoleGuard } from '../../../common/guard/role.guard';
+import {
+    RefreshTokenRequest,
+    RefreshTokenResponse,
+} from './models/refreshToken.model';
+import { LogoutRequest, LogoutResponse } from './models/logout.model';
 
 @Controller('users')
 
@@ -70,7 +75,6 @@ export class UserController extends AbstractHttpController {
         @Body() body: TodolistRequest,
         @GetUser() user: IUserEntity,
     ) {
-        console.log(user);
         const res = await this.userService.createTodolist(
             {
                 listTitle: body.listTitle,
@@ -207,7 +211,6 @@ export class UserController extends AbstractHttpController {
             todolistId,
             user.id,
         );
-        console.log({ res });
         if (res.isError()) {
             super.sendResult(response, res);
             return;
@@ -466,7 +469,8 @@ export class UserController extends AbstractHttpController {
             super.sendResult(
                 response,
                 Ok<SignInResponse>({
-                    token: res.value,
+                    accessToken: res.value.accessToken,
+                    refreshToken: res.value.refreshToken,
                 }),
             );
         }
@@ -493,10 +497,60 @@ export class UserController extends AbstractHttpController {
                     username: res.value.username,
                     id: res.value.id,
                     createdAt: res.value.createdAt.toISOString(),
-                    token: res.value.token,
+                    accessToken: res.value.accessToken,
                 }),
             );
         }
         return;
+    }
+    @Get('auth/logout/:id')
+    @ApiTags('Auth')
+    @ApiOperation({ summary: 'logout' })
+    @ApiExtraModels(LogoutResponse, StdResponse)
+    @ApiStdResponse(LogoutResponse)
+    async logout(
+        @Res() response: Response,
+        @Param('id') userId: string,
+    ): Promise<LogoutResponse> {
+        const res = await this.userService.logout(userId);
+        if (res.isError()) {
+            super.sendResult(response, res);
+            return;
+        }
+        if (res.isOk()) {
+            super.sendResult(
+                response,
+                Ok<LogoutResponse>({
+                    success: res.value,
+                }),
+            );
+        }
+        return;
+    }
+    @Post('auth/refresh')
+    @ApiTags('Auth')
+    @ApiOperation({ summary: 'update refresh token' })
+    @ApiExtraModels(RefreshTokenResponse, StdResponse)
+    @ApiStdResponse(RefreshTokenResponse)
+    async refreshToken(
+        @Res() response: Response,
+        @Body() body: RefreshTokenRequest,
+    ): Promise<RefreshTokenResponse> {
+        const res = await this.userService.updateRefreshToken(
+            body.refreshToken,
+        );
+        if (res.isError()) {
+            super.sendResult(response, res);
+            return;
+        }
+        if (res.isOk()) {
+            super.sendResult(
+                response,
+                Ok<RefreshTokenResponse>({
+                    refreshToken: res.value.refreshToken,
+                    accessToken: res.value.accessToken,
+                }),
+            );
+        }
     }
 }

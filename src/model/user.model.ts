@@ -7,10 +7,12 @@ export interface IUser {
     username: string;
     password: string;
     role: Role;
+    refreshToken: string;
     todoLists: Partial<ITodolistEntity>[];
 }
 
 export interface IUserEntity extends IUser, IEntity, IDated {}
 export interface INewUserEntity extends IUser, IEntity, IDated {
-    token: string;
+    accessToken: string;
+    refreshToken: string;
 }

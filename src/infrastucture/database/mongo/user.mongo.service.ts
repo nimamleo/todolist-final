@@ -1,4 +1,4 @@
-import { Body, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { IUserProvider } from '../provider/user.provider';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schema/user.schema';
@@ -8,6 +8,9 @@ import { ITodolist, ITodolistEntity } from 'src/model/todolist.model';
 import { ITodo, ITodoEntity } from 'src/model/todo.model';
 import { TodoList } from './schema/todolist.schema';
 import { Todo } from './schema/todo.scheam';
+import { Err } from '../../../common/result';
+import { GenericErrorCode } from '../../../common/errors/generic-error';
+import { HandleError } from '../../../common/decorator/handler-error.decorator';
 
 @Injectable()
 export class UserMongoService implements IUserProvider {
@@ -118,17 +121,17 @@ export class UserMongoService implements IUserProvider {
             _id: new Types.ObjectId(userId),
             'todoLists._id': new Types.ObjectId(todolistId),
         });
+        if (!res) {
+            // return Err('todos not found', GenericErrorCode.NOT_FOUND);
+        }
 
         return res.todoLists[0].todos.map((todo) => Todo.toITodoEntity(todo));
     }
     async getOneTodo(todoId: string, userId: string): Promise<ITodoEntity> {
-        console.log({ todoId, userId });
-
         const res = await this.userModel.findOne({
             _id: new Types.ObjectId(userId),
             'todoLists.todos._id': new Types.ObjectId(todoId),
         });
-
         return Todo.toITodoEntity(res.todoLists?.[0].todos?.[0]);
     }
 
@@ -213,5 +216,19 @@ export class UserMongoService implements IUserProvider {
             _id: new Types.ObjectId(id),
         });
         return res.deletedCount >= 1;
+    }
+
+    async updateUserRefreshToken(
+        userId: string,
+        refreshToken: string,
+    ): Promise<boolean> {
+        const updateResult = await this.userModel.updateOne(
+            { _id: new Types.ObjectId(userId) },
+            {
+                $set: { refreshToken: refreshToken },
+            },
+        );
+        console.log(updateResult.modifiedCount);
+        return updateResult.modifiedCount >= 1;
     }
 }

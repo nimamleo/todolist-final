@@ -11,7 +11,7 @@ import { Err } from 'src/common/result';
 import { GenericErrorCode } from '../../../../common/errors/generic-error';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
     constructor(
         private configService: ConfigService,
         @Inject(USER_DATABASE_PROVIDER)

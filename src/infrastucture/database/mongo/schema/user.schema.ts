@@ -17,6 +17,9 @@ export class User {
     @Prop({ required: true, type: String })
     role: Role;
 
+    @Prop({ required: false, type: String })
+    refreshToken: string;
+
     @Prop({
         type: Types.Array,
     })
@@ -37,6 +40,7 @@ export class User {
         user.username = iUser.username;
         user.password = iUser.password;
         user.role = iUser.role;
+        user.refreshToken = iUser.refreshToken;
         if (iUser.todoLists && iUser.todoLists.length !== 0) {
             user.todoLists = iUser.todoLists.map((x) =>
                 TodoList.fromITodoList(x),
@@ -58,6 +62,7 @@ export class User {
             username: user.username,
             password: user.password,
             role: user.role,
+            refreshToken: user.refreshToken,
             todoLists: user.todoLists.map((x) => TodoList.toITodoListEntity(x)),
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,

@@ -25,5 +25,7 @@ export class SignInRequest {
 
 export class SignInResponse {
     @ApiProperty()
-    token: string;
+    accessToken: string;
+    @ApiProperty()
+    refreshToken: string;
 }

@@ -29,7 +29,7 @@ export class SignUpResponse {
     @ApiProperty()
     username: string;
     @ApiProperty()
-    token: string;
+    accessToken: string;
     @ApiProperty()
     createdAt: string;
 }

@@ -5,6 +5,7 @@ import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { IAssetProvider } from '../provider/asset.provider';
 import { Err, Ok, Result } from '../../../common/result';
+import { GenericErrorCode } from '../../../common/errors/generic-error';
 
 @Injectable()
 export class AssetMongoService implements IAssetProvider {
@@ -13,9 +14,21 @@ export class AssetMongoService implements IAssetProvider {
         private readonly fileModel: Model<File>,
     ) {}
 
-    async createFile(ifile: IFile): Promise<Result<Partial<IFileEntity>>> {
+    async createFile(
+        ifile: Partial<IFile>,
+        todoId: string,
+    ): Promise<Result<Partial<IFileEntity>>> {
         const file = File.fromIFile(ifile);
-        const res = await this.fileModel.create(file);
+
+        const res = await this.fileModel.create({
+            filePath: file.filePath,
+            fileName: file.fileName,
+            mimetype: file.mimetype,
+            size: file.size,
+            todoId: todoId,
+            createdAt: file.createdAt,
+            updatedAt: file.updatedAt,
+        });
         if (!res) {
             return Err('create failed');
         }
@@ -29,5 +42,19 @@ export class AssetMongoService implements IAssetProvider {
             return Err('delete failed');
         }
         return Ok(res.deletedCount >= 1);
+    }
+
+    async getFile(id: string): Promise<Result<Partial<IFileEntity>>> {
+        const res = await this.fileModel.findOne({
+            _id: new Types.ObjectId(id),
+        });
+        if (!res) return Err('image not found', GenericErrorCode.NOT_FOUND);
+        return Ok({
+            filePath: res.filePath,
+            fileName: res.fileName,
+            mimetype: res.mimetype,
+            size: res.size,
+            todoId: res.todoId.toString(),
+        });
     }
 }

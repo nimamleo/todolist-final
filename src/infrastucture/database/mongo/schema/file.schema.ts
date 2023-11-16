@@ -40,6 +40,7 @@ export class File {
         file.todoId = new Types.ObjectId(iFileEntity.todoId);
         file.createdAt = file.createdAt || new Date();
         file.updatedAt = new Date();
+
         return file;
     }
     static toIFileEntity(file: File): Partial<IFileEntity> {
