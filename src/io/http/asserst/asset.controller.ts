@@ -19,7 +19,6 @@ import { Filters } from '../../../common/validation/custom-validation/file-filte
 import { AssetService } from '../../../application/asset.service';
 import { AbstractHttpController } from '../../../common/abstract-http.controller';
 import { Ok } from '../../../common/result';
-import { CreateFileResponse } from './models/createFile.model';
 import { Response } from 'express';
 import { getMimeTypeFromArrayBuffer } from '../../../common/utils/fileMimeType-extractor';
 import { StdResponse } from '../../../common/std-response/std-response';
@@ -31,6 +30,7 @@ import * as fs from 'fs';
 import { GetUser } from '../../../common/decorator/get-user.decorator';
 import { IUser, IUserEntity } from '../../../model/user.model';
 import { JwtAuthGuard } from '../../../infrastucture/Auth/JWT/guards/jwt.guard';
+import { CreateFileResponse } from '../users/models/createFile.model';
 
 @Controller('files')
 @ApiTags('files')

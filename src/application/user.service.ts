@@ -1,13 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FilterQuery } from 'mongoose';
-import { HandleError } from 'src/common/decorator/handler-error.decorator';
-import { GenericErrorCode } from 'src/common/errors/generic-error';
-import { Err, Ok, Result } from 'src/common/result';
+import { HandleError } from '../common/decorator/handler-error.decorator';
+import { GenericErrorCode } from '../common/errors/generic-error';
+import { Err, Ok, Result } from '../common/result';
 import {
     IUserProvider,
     USER_DATABASE_PROVIDER,
-} from 'src/infrastucture/database/provider/user.provider';
-import { ITodo, ITodoEntity } from 'src/model/todo.model';
+} from '../infrastucture/database/provider/user.provider';
 import { ITodolist, ITodolistEntity } from 'src/model/todolist.model';
 import { INewUserEntity, IUser, IUserEntity } from 'src/model/user.model';
 import {
@@ -16,12 +15,11 @@ import {
 } from '../infrastucture/Auth/provider/auth.provider';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../common/enum/role.enum';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+// import { CACHE_MANAGER } from '@nestjs/cache-manager';
+// import { Cache } from 'cache-manager';
 import { TokensInterface } from '../common/interface/tokens.interface';
-import { compare } from 'bcrypt';
-import { use } from 'passport';
 import { RefreshTokenResponse } from '../io/http/users/models/refreshToken.model';
+import { ITodo, ITodoEntity } from '../model/todo.model';
 
 @Injectable()
 export class UserService {
@@ -29,9 +27,8 @@ export class UserService {
         @Inject(USER_DATABASE_PROVIDER)
         private readonly userRepository: IUserProvider,
         @Inject(AUTH_JWT_PROVIDER)
-        private readonly authService: IAuthProvider,
-        @Inject(CACHE_MANAGER)
-        private cacheService: Cache,
+        private readonly authService: IAuthProvider, // @Inject(CACHE_MANAGER)
+        // private cacheService: Cache,
     ) {}
 
     // ======================================TODO LIST ==============================================
@@ -44,7 +41,6 @@ export class UserService {
             todolistBody,
             userId,
         );
-        await this.cacheService.set(res.id, res, 60000);
         if (!res) {
             return Err('create todolist failed');
         }
@@ -55,7 +51,7 @@ export class UserService {
     async getAllTodolist(userId: string): Promise<Result<ITodolistEntity[]>> {
         const res = await this.userRepository.getAllTodolist(userId);
         if (!res) {
-            return Err('create todolist failed');
+            return Err('get todolist failed');
         }
         return Ok(res);
     }
@@ -65,13 +61,13 @@ export class UserService {
         userId: string,
         todolistId: string,
     ): Promise<Result<ITodolistEntity>> {
-        const cachedData = await this.cacheService.get<ITodolistEntity>(
-            todolistId.toString(),
-        );
-        if (cachedData) {
-            console.log(`Getting data from cache!`);
-            return Ok(cachedData);
-        }
+        // const cachedData = await this.cacheService.get<ITodolistEntity>(
+        //     todolistId.toString(),
+        // );
+        // if (cachedData) {
+        //     console.log(`Getting data from cache!`);
+        //     return Ok(cachedData);
+        // }
         const res = await this.userRepository.getOneTodoListById(
             userId,
             todolistId,
@@ -176,7 +172,7 @@ export class UserService {
             todolistId,
             userId,
         );
-        if (IsTodolistExists) {
+        if (!IsTodolistExists) {
             return Err('todolist does not exist');
         }
         const res = await this.userRepository.updateTodo(

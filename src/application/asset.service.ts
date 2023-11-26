@@ -15,6 +15,7 @@ import {
     USER_DATABASE_PROVIDER,
 } from '../infrastucture/database/provider/user.provider';
 import { GenericErrorCode } from '../common/errors/generic-error';
+import { AssertFileInterface } from '../common/interface/assert-file.interface';
 
 @Injectable()
 export class AssetService {
@@ -53,8 +54,14 @@ export class AssetService {
     }
 
     @HandleError
-    async serveImage(imageId: string, userId: string) {
+    async serveImage(
+        imageId: string,
+        userId: string,
+    ): Promise<Result<AssertFileInterface>> {
         const image = await this.fileRepository.getFile(imageId);
+        if (image.isError()) {
+            return Err('can not get file details');
+        }
         const user = await this.userepository.getOneTodo(
             image.value.todoId,
             userId,
