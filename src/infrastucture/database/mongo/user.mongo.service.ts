@@ -66,10 +66,14 @@ export class UserMongoService implements IUserProvider {
     }
 
     async deleteTodolist(userId: string, todolistId: string): Promise<boolean> {
-        const res = await this.userModel.updateOne({
-            _id: new Types.ObjectId(userId),
-            $pull: { todoLists: { _id: new Types.ObjectId(todolistId) } },
-        });
+        const res = await this.userModel.updateOne(
+            {
+                _id: new Types.ObjectId(userId),
+            },
+            {
+                $pull: { todoLists: { _id: new Types.ObjectId(todolistId) } },
+            },
+        );
         return res.modifiedCount >= 1;
     }
 
