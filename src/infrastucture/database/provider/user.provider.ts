@@ -13,7 +13,12 @@ export interface IUserReader {
     ): Promise<ITodolistEntity>;
     getAllTodolist(userId: string): Promise<ITodolistEntity[]>;
     getOneTodo(todoId: string, userId: string): Promise<ITodoEntity>;
-    getAllTodo(userId: string, todolistId: string): Promise<ITodoEntity[]>;
+    getAllTodo(
+        userId: string,
+        todolistId: string,
+        page: number,
+        perPage: number,
+    ): Promise<ITodoEntity[]>;
 }
 export interface IUserWriter {
     createUser(iUser: Partial<IUser>): Promise<IUserEntity>;

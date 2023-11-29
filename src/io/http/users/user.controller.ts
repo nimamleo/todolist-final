@@ -6,6 +6,7 @@ import {
     Param,
     Patch,
     Post,
+    Query,
     Res,
     UseGuards,
 } from '@nestjs/common';
@@ -54,6 +55,7 @@ import {
     RefreshTokenResponse,
 } from './models/refreshToken.model';
 import { LogoutRequest, LogoutResponse } from './models/logout.model';
+import { Ipagination } from '../../../common/interface/pagination.interface';
 
 @Controller('users')
 
@@ -239,8 +241,15 @@ export class UserController extends AbstractHttpController {
         @Res() response: Response,
         @GetUser() user: IUserEntity,
         @Param('todolistId') todolistId: string,
+        @Query('page') page: number,
+        @Query('perPage') perPage: number,
     ): Promise<GetAllTodoResponse> {
-        const res = await this.userService.getAllTodo(user.id, todolistId);
+        const res = await this.userService.getAllTodo(
+            user.id,
+            todolistId,
+            +page,
+            +perPage,
+        );
         if (res.isError()) {
             super.sendResult(response, res);
             return;
@@ -345,6 +354,7 @@ export class UserController extends AbstractHttpController {
             );
         }
     }
+
     // ======================================USER ==============================================
 
     @Get(':id')

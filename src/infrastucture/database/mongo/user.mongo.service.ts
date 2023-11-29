@@ -114,30 +114,58 @@ export class UserMongoService implements IUserProvider {
                 _id: 0,
             },
         );
+        if (!res) {
+            // return Err('todolist notFound');
+        }
+        console.log(res);
         return TodoList.toITodoListEntity(res.todoLists[0]);
     }
 
     async getAllTodo(
         userId: string,
         todolistId: string,
+        page: number,
+        perPage: number,
     ): Promise<ITodoEntity[]> {
-        const res = await this.userModel.findOne({
-            _id: new Types.ObjectId(userId),
-            'todoLists._id': new Types.ObjectId(todolistId),
+        // const res = await this.userModel.findOne(
+        //     {
+        //         _id: new Types.ObjectId(userId),
+        //         'todoLists._id': new Types.ObjectId(todolistId),
+        //     },
+        //     {
+        //         'todoLists.todos': 1,
+        //     },
+        // );
+        const res = await this.userModel
+            .aggregate([
+                {
+                    $match: {
+                        'todoLists._id': new Types.ObjectId(todolistId),
+                    },
+                },
+                {
+                    $unwind: '$todoLists',
+                },
+                {
+                    $unwind: '$todoLists.todos',
+                },
+                {
+                    $project: {
+                        'todoLists.todos': 1,
+                    },
+                },
+            ])
+            .skip(perPage * (page - 1))
+            .limit(perPage);
+        return res.map((x) => {
+            return Todo.toITodoEntity(x.todoLists.todos);
         });
-        if (!res) {
-            // return Err('todos not found', GenericErrorCode.NOT_FOUND);
-        }
-
-        return res.todoLists[0].todos.map((todo) => Todo.toITodoEntity(todo));
     }
     async getOneTodo(todoId: string, userId: string): Promise<ITodoEntity> {
         const res = await this.userModel.aggregate([
             {
                 $match: {
-                    'todoLists.todos._id': new Types.ObjectId(
-                        '6565042ea23b4370d9ef12ed',
-                    ),
+                    'todoLists.todos._id': new Types.ObjectId(todoId),
                 },
             },
             {

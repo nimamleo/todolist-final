@@ -104,8 +104,8 @@ export class UserService {
         userId: string,
     ): Promise<Result<ITodoEntity>> {
         const IsTodolistExists = await this.userRepository.getOneTodoListById(
-            userId,
             todolistId,
+            userId,
         );
         if (!IsTodolistExists) {
             return Err('todolist does not exist');
@@ -137,15 +137,22 @@ export class UserService {
     async getAllTodo(
         userId: string,
         todolistId: string,
+        page: number,
+        perPage: number,
     ): Promise<Result<ITodoEntity[]>> {
         const IsTodolistExists = await this.userRepository.getOneTodoListById(
             todolistId,
             userId,
         );
-        if (IsTodolistExists) {
+        if (!IsTodolistExists) {
             return Err('todolist does not exist');
         }
-        const res = await this.userRepository.getAllTodo(userId, todolistId);
+        const res = await this.userRepository.getAllTodo(
+            userId,
+            todolistId,
+            page,
+            perPage,
+        );
         if (!res) {
             return Err('todos not found', GenericErrorCode.NOT_FOUND);
         }
