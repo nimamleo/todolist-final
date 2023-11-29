@@ -26,7 +26,7 @@ export class AuthJwtService implements IAuthProvider {
                 username,
                 type,
             },
-            { expiresIn: '15m', secret: this.configService.get('JWT_SECRET') },
+            { expiresIn: '1h', secret: this.configService.get('JWT_SECRET') },
         );
         const refreshToken = this.jwtService.sign(
             {

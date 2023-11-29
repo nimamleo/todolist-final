@@ -49,8 +49,8 @@ export class UserMongoService implements IUserProvider {
     }
 
     async getOneTodoListById(
-        userId: string,
         todolistId: string,
+        userId: string,
     ): Promise<ITodolistEntity> {
         const res = await this.userModel.findOne(
             {
@@ -132,11 +132,33 @@ export class UserMongoService implements IUserProvider {
         return res.todoLists[0].todos.map((todo) => Todo.toITodoEntity(todo));
     }
     async getOneTodo(todoId: string, userId: string): Promise<ITodoEntity> {
-        const res = await this.userModel.findOne({
-            _id: new Types.ObjectId(userId),
-            'todoLists.todos._id': new Types.ObjectId(todoId),
-        });
-        return Todo.toITodoEntity(res.todoLists?.[0].todos?.[0]);
+        const res = await this.userModel.aggregate([
+            {
+                $match: {
+                    'todoLists.todos._id': new Types.ObjectId(
+                        '6565042ea23b4370d9ef12ed',
+                    ),
+                },
+            },
+            {
+                $unwind: '$todoLists',
+            },
+            {
+                $unwind: '$todoLists.todos',
+            },
+            {
+                $match: {
+                    'todoLists.todos._id': new Types.ObjectId(todoId),
+                },
+            },
+            {
+                $project: {
+                    'todoLists.todos': 1,
+                },
+            },
+        ]);
+
+        return Todo.toITodoEntity(res?.[0].todoLists.todos);
     }
 
     async deleteTodo(todoId: string, userId: string): Promise<boolean> {
@@ -162,10 +184,9 @@ export class UserMongoService implements IUserProvider {
         userId: string,
     ): Promise<ITodoEntity> {
         const newTodo = Todo.fromITodo({ ...ITodo, id: todoId });
-
         const res = await this.userModel.updateOne(
             {
-                _id: new Types.ObjectId(userId),
+                _id: new Types.ObjectId('656786c73784adfd885d1067'),
             },
             {
                 $set: {
@@ -178,12 +199,12 @@ export class UserMongoService implements IUserProvider {
                 arrayFilters: [
                     {
                         'list._id': {
-                            $eq: new Types.ObjectId(todolistId),
+                            $eq: new Types.ObjectId('656786d93784adfd885d106b'),
                         },
                     },
                     {
                         'customData._id': {
-                            $eq: new Types.ObjectId(todoId),
+                            $eq: new Types.ObjectId('656786eb3784adfd885d106f'),
                         },
                     },
                 ],
