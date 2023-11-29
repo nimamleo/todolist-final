@@ -186,7 +186,7 @@ export class UserMongoService implements IUserProvider {
         const newTodo = Todo.fromITodo({ ...ITodo, id: todoId });
         const res = await this.userModel.updateOne(
             {
-                _id: new Types.ObjectId('656786c73784adfd885d1067'),
+                _id: new Types.ObjectId(userId),
             },
             {
                 $set: {
@@ -199,12 +199,12 @@ export class UserMongoService implements IUserProvider {
                 arrayFilters: [
                     {
                         'list._id': {
-                            $eq: new Types.ObjectId('656786d93784adfd885d106b'),
+                            $eq: new Types.ObjectId(todolistId),
                         },
                     },
                     {
                         'customData._id': {
-                            $eq: new Types.ObjectId('656786eb3784adfd885d106f'),
+                            $eq: new Types.ObjectId(todoId),
                         },
                     },
                 ],
