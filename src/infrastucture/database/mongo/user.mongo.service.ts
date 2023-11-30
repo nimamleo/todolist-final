@@ -8,7 +8,7 @@ import { ITodolist, ITodolistEntity } from 'src/model/todolist.model';
 import { ITodo, ITodoEntity } from 'src/model/todo.model';
 import { TodoList } from './schema/todolist.schema';
 import { Todo } from './schema/todo.scheam';
-import { Err } from '../../../common/result';
+import { Err, Ok, Result } from '../../../common/result';
 import { GenericErrorCode } from '../../../common/errors/generic-error';
 import { HandleError } from '../../../common/decorator/handler-error.decorator';
 
@@ -19,10 +19,11 @@ export class UserMongoService implements IUserProvider {
         private readonly userModel: Model<User>,
     ) {}
     // ======================================TODO LIST ==============================================
+    @HandleError
     async createTodolist(
         iTodolist: Partial<ITodolist>,
         userId: string,
-    ): Promise<ITodolistEntity> {
+    ): Promise<Result<ITodolistEntity>> {
         const todolist = TodoList.fromITodoList(iTodolist);
 
         const res = await this.userModel.findOneAndUpdate(
@@ -30,28 +31,32 @@ export class UserMongoService implements IUserProvider {
             { $push: { todoLists: todolist } },
         );
 
-        if (!res)
-            throw new InternalServerErrorException('create todolist failed');
+        if (!res) return Err('create todolist failed');
 
-        return TodoList.toITodoListEntity(todolist);
+        return Ok(TodoList.toITodoListEntity(todolist));
     }
-    async getAllTodolist(userId: string): Promise<ITodolistEntity[]> {
+    @HandleError
+    async getAllTodolist(userId: string): Promise<Result<ITodolistEntity[]>> {
         const res = await this.userModel.findOne(
             {
                 _id: new Types.ObjectId(userId),
             },
             { todoLists: 1, _id: 0 },
         );
+        if (!res) return Err('todolists not found', GenericErrorCode.NOT_FOUND);
 
-        return res.todoLists.map((todolist) =>
-            TodoList.toITodoListEntity(todolist),
+        return Ok(
+            res.todoLists.map((todolist) =>
+                TodoList.toITodoListEntity(todolist),
+            ),
         );
     }
 
+    @HandleError
     async getOneTodoListById(
         todolistId: string,
         userId: string,
-    ): Promise<ITodolistEntity> {
+    ): Promise<Result<ITodolistEntity>> {
         const res = await this.userModel.findOne(
             {
                 _id: new Types.ObjectId(userId),
@@ -62,10 +67,15 @@ export class UserMongoService implements IUserProvider {
                 _id: 0,
             },
         );
-        return TodoList.toITodoListEntity(res.todoLists[0]);
+        if (!res) return Err('todo list not found', GenericErrorCode.NOT_FOUND);
+        return Ok(TodoList.toITodoListEntity(res.todoLists[0]));
     }
 
-    async deleteTodolist(userId: string, todolistId: string): Promise<boolean> {
+    @HandleError
+    async deleteTodolist(
+        userId: string,
+        todolistId: string,
+    ): Promise<Result<boolean>> {
         const res = await this.userModel.updateOne(
             {
                 _id: new Types.ObjectId(userId),
@@ -74,15 +84,19 @@ export class UserMongoService implements IUserProvider {
                 $pull: { todoLists: { _id: new Types.ObjectId(todolistId) } },
             },
         );
-        return res.modifiedCount >= 1;
+        if (res.modifiedCount == 0) {
+            return Err('delete todolist failed');
+        }
+        return Ok(res.modifiedCount >= 1);
     }
 
     // ======================================TODO  ==============================================
+    @HandleError
     async createTodo(
         iTodo: Partial<ITodo>,
         userId: string,
         todolistId: string,
-    ): Promise<ITodoEntity> {
+    ): Promise<Result<ITodoEntity>> {
         const todo = Todo.fromITodo(iTodo);
         const res = await this.userModel.updateOne(
             {
@@ -95,15 +109,15 @@ export class UserMongoService implements IUserProvider {
                 },
             },
         );
-        if (res.modifiedCount <= 0)
-            throw new InternalServerErrorException('create Todo failed');
-        return Todo.toITodoEntity(todo);
+        if (res.modifiedCount <= 0) return Err('create Todo failed');
+        return Ok(Todo.toITodoEntity(todo));
     }
 
+    @HandleError
     async getOneTodoList(
         query: FilterQuery<unknown>,
         userId: string,
-    ): Promise<ITodolistEntity> {
+    ): Promise<Result<ITodolistEntity>> {
         const res = await this.userModel.findOne(
             {
                 _id: new Types.ObjectId(userId),
@@ -115,27 +129,18 @@ export class UserMongoService implements IUserProvider {
             },
         );
         if (!res) {
-            // return Err('todolist notFound');
+            return Err('todo not found', GenericErrorCode.NOT_FOUND);
         }
-        console.log(res);
-        return TodoList.toITodoListEntity(res.todoLists[0]);
+        return Ok(TodoList.toITodoListEntity(res.todoLists[0]));
     }
 
+    @HandleError
     async getAllTodo(
         userId: string,
         todolistId: string,
         page: number,
         perPage: number,
-    ): Promise<ITodoEntity[]> {
-        // const res = await this.userModel.findOne(
-        //     {
-        //         _id: new Types.ObjectId(userId),
-        //         'todoLists._id': new Types.ObjectId(todolistId),
-        //     },
-        //     {
-        //         'todoLists.todos': 1,
-        //     },
-        // );
+    ): Promise<Result<ITodoEntity[]>> {
         const res = await this.userModel
             .aggregate([
                 {
@@ -157,11 +162,20 @@ export class UserMongoService implements IUserProvider {
             ])
             .skip(perPage * (page - 1))
             .limit(perPage);
-        return res.map((x) => {
-            return Todo.toITodoEntity(x.todoLists.todos);
-        });
+
+        if (!res) return Err('todos not found', GenericErrorCode.NOT_FOUND);
+
+        return Ok(
+            res.map((x) => {
+                return Todo.toITodoEntity(x.todoLists.todos);
+            }),
+        );
     }
-    async getOneTodo(todoId: string, userId: string): Promise<ITodoEntity> {
+    @HandleError
+    async getOneTodo(
+        todoId: string,
+        userId: string,
+    ): Promise<Result<ITodoEntity>> {
         const res = await this.userModel.aggregate([
             {
                 $match: {
@@ -185,11 +199,13 @@ export class UserMongoService implements IUserProvider {
                 },
             },
         ]);
+        if (!res) return Err('todo not found');
 
-        return Todo.toITodoEntity(res?.[0].todoLists.todos);
+        return Ok(Todo.toITodoEntity(res?.[0].todoLists.todos));
     }
 
-    async deleteTodo(todoId: string, userId: string): Promise<boolean> {
+    @HandleError
+    async deleteTodo(todoId: string, userId: string): Promise<Result<boolean>> {
         const res = await this.userModel.updateOne(
             {
                 _id: new Types.ObjectId(userId),
@@ -201,16 +217,17 @@ export class UserMongoService implements IUserProvider {
                 },
             },
         );
-
-        return res.modifiedCount >= 1;
+        if (res.modifiedCount == 0) return Err('delete tod failed ');
+        return Ok(res.modifiedCount >= 1);
     }
 
+    @HandleError
     async updateTodo(
         todoId: string,
         todolistId: string,
         ITodo: Partial<ITodo>,
         userId: string,
-    ): Promise<ITodoEntity> {
+    ): Promise<Result<ITodoEntity>> {
         const newTodo = Todo.fromITodo({ ...ITodo, id: todoId });
         const res = await this.userModel.updateOne(
             {
@@ -238,50 +255,60 @@ export class UserMongoService implements IUserProvider {
                 ],
             },
         );
+        if (res.modifiedCount == 0) return Err('update todo failed');
 
-        return Todo.toITodoEntity(newTodo);
+        return Ok(Todo.toITodoEntity(newTodo));
     }
 
     // ======================================USER  ==============================================
-    async getUserById(id: string): Promise<IUserEntity> {
+    @HandleError
+    async getUserById(id: string): Promise<Result<IUserEntity>> {
         const res = await this.userModel.findOne({
             _id: new Types.ObjectId(id),
         });
-        // if(!res)
-        return User.toIUserEntity(res);
+        if (!res) return Err('user not found', GenericErrorCode.NOT_FOUND);
+        return Ok(User.toIUserEntity(res));
     }
 
-    async getUser(query: FilterQuery<unknown>): Promise<IUserEntity> {
+    @HandleError
+    async getUser(query: FilterQuery<unknown>): Promise<Result<IUserEntity>> {
         const res = await this.userModel.findOne(query);
-        return User.toIUserEntity(res);
+        if (!res) return Err('user not found', GenericErrorCode.NOT_FOUND);
+        return Ok(User.toIUserEntity(res));
     }
 
-    async createUser(iUser: IUser): Promise<IUserEntity> {
+    @HandleError
+    async createUser(iUser: IUser): Promise<Result<IUserEntity>> {
         const user = User.fromIUser(iUser);
 
         const res = await this.userModel.create(user);
 
-        return User.toIUserEntity(res);
+        if (!res) return Err('create user failed');
+        return Ok(User.toIUserEntity(res));
     }
 
-    async deleteUserById(id: string): Promise<boolean> {
+    async deleteUserById(id: string): Promise<Result<boolean>> {
         const res = await this.userModel.deleteOne({
             _id: new Types.ObjectId(id),
         });
-        return res.deletedCount >= 1;
+        if (res.deletedCount == 0) return Err('delete user failed');
+        return Ok(res.deletedCount >= 1);
     }
 
+    @HandleError
     async updateUserRefreshToken(
         userId: string,
         refreshToken: string,
-    ): Promise<boolean> {
+    ): Promise<Result<boolean>> {
         const updateResult = await this.userModel.updateOne(
             { _id: new Types.ObjectId(userId) },
             {
                 $set: { refreshToken: refreshToken },
             },
         );
-        console.log(updateResult.modifiedCount);
-        return updateResult.modifiedCount >= 1;
+        if (updateResult.modifiedCount == 0)
+            return Err('update refresh token failed');
+
+        return Ok(updateResult.modifiedCount >= 1);
     }
 }

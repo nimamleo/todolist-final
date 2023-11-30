@@ -28,8 +28,8 @@ export class UserService {
         private readonly userRepository: IUserProvider,
         @Inject(AUTH_JWT_PROVIDER)
         private readonly authService: IAuthProvider, // @Inject(CACHE_MANAGER)
-        // private cacheService: Cache,
-    ) {}
+    ) // private cacheService: Cache,
+    {}
 
     // ======================================TODO LIST ==============================================
     @HandleError
@@ -41,19 +41,19 @@ export class UserService {
             todolistBody,
             userId,
         );
-        if (!res) {
+        if (res.isError()) {
             return Err('create todolist failed');
         }
-        return Ok(res);
+        return Ok(res.value);
     }
 
     @HandleError
     async getAllTodolist(userId: string): Promise<Result<ITodolistEntity[]>> {
         const res = await this.userRepository.getAllTodolist(userId);
-        if (!res) {
+        if (res.isError()) {
             return Err('get todolist failed');
         }
-        return Ok(res);
+        return Ok(res.value);
     }
 
     @HandleError
@@ -61,19 +61,13 @@ export class UserService {
         userId: string,
         todolistId: string,
     ): Promise<Result<ITodolistEntity>> {
-        // const cachedData = await this.cacheService.get<ITodolistEntity>(
-        //     todolistId.toString(),
-        // );
-        // if (cachedData) {
-        //     console.log(`Getting data from cache!`);
-        //     return Ok(cachedData);
-        // }
         const res = await this.userRepository.getOneTodoListById(
             userId,
             todolistId,
         );
-        if (!res) return Err('todolist not found', GenericErrorCode.NOT_FOUND);
-        return Ok(res);
+        if (res.isError())
+            return Err('todolist not found', GenericErrorCode.NOT_FOUND);
+        return Ok(res.value);
     }
 
     @HandleError
@@ -90,10 +84,10 @@ export class UserService {
             userId,
             todolistId,
         );
-        if (!res) {
+        if (res.isError()) {
             return Err('delete todolist failed');
         }
-        return Ok(res);
+        return Ok(res.value);
     }
 
     // ======================================TODO ==============================================
@@ -115,10 +109,10 @@ export class UserService {
             userId,
             todolistId,
         );
-        if (!res) {
+        if (res.isError()) {
             return Err('todo create failed');
         }
-        return Ok(res);
+        return Ok(res.value);
     }
 
     @HandleError
@@ -127,10 +121,10 @@ export class UserService {
         userId: string,
     ): Promise<Result<ITodoEntity>> {
         const res = await this.userRepository.getOneTodo(todoId, userId);
-        if (!res) {
+        if (res.isError()) {
             return Err('todo not found', GenericErrorCode.NOT_FOUND);
         }
-        return Ok(res);
+        return Ok(res.value);
     }
 
     @HandleError
@@ -153,19 +147,19 @@ export class UserService {
             page,
             perPage,
         );
-        if (!res) {
+        if (res.isError()) {
             return Err('todos not found', GenericErrorCode.NOT_FOUND);
         }
-        return Ok(res);
+        return Ok(res.value);
     }
 
     @HandleError
     async deleteTodo(todoId: string, userId: string): Promise<Result<boolean>> {
         const res = await this.userRepository.deleteTodo(todoId, userId);
-        if (!res) {
+        if (res.isError()) {
             return Err('delete todo failed');
         }
-        return Ok(res);
+        return Ok(res.value);
     }
 
     @HandleError
@@ -179,7 +173,7 @@ export class UserService {
             todolistId,
             userId,
         );
-        if (!IsTodolistExists) {
+        if (IsTodolistExists.isError()) {
             return Err('todolist does not exist');
         }
         const res = await this.userRepository.updateTodo(
@@ -188,29 +182,29 @@ export class UserService {
             ITodo,
             userId,
         );
-        if (!res) {
+        if (res.isError()) {
             return Err('update todo failed');
         }
-        return Ok(res);
+        return Ok(res.value);
     }
 
     // ======================================  USER  ==============================================
     @HandleError
     async getUserById(id: string): Promise<Result<IUserEntity>> {
         const res = await this.userRepository.getUserById(id);
-        if (!res) {
+        if (res.isError()) {
             return Err('user not found');
         }
-        return Ok(res);
+        return Ok(res.value);
     }
 
     @HandleError
     async createUser(userBody: Partial<IUser>): Promise<Result<IUserEntity>> {
         const res = await this.userRepository.createUser(userBody);
-        if (!res) {
+        if (res.isError()) {
             return Err('create user failed');
         }
-        return Ok(res);
+        return Ok(res.value);
     }
 
     @HandleError
@@ -221,10 +215,10 @@ export class UserService {
     @HandleError
     async deleteUserById(id: string): Promise<Result<boolean>> {
         const res = await this.userRepository.deleteUserById(id);
-        if (!res) {
+        if (res.isError()) {
             return Err('can not delete user with given id');
         }
-        return Ok(res);
+        return Ok(res.value);
     }
 
     // ======================================  AUTH  ==============================================
@@ -234,17 +228,20 @@ export class UserService {
         password: string,
     ): Promise<Result<TokensInterface>> {
         const user = await this.userRepository.getUser({ username });
-        if (!user) {
+        if (!user.value) {
             return Err('credential not valid');
         }
-        const comparePassword = await bcrypt.compare(password, user.password);
+        const comparePassword = await bcrypt.compare(
+            password,
+            user.value.password,
+        );
         if (!comparePassword) return Err('credential not valid');
-        const tokens = await this.generateToken(user);
+        const tokens = await this.generateToken(user.value);
         const updateRes = await this.userRepository.updateUserRefreshToken(
-            user.id,
+            user.value.id,
             tokens.value.refreshToken,
         );
-        if (!updateRes) {
+        if (!updateRes.value) {
             return Err('signIn failed');
         }
 
@@ -256,10 +253,10 @@ export class UserService {
             userId,
             null,
         );
-        if (!updateRes) {
+        if (!updateRes.value) {
             return Err('logout failed');
         }
-        return Ok(updateRes);
+        return Ok(updateRes.value);
     }
 
     @HandleError
@@ -279,24 +276,24 @@ export class UserService {
             role: Role.USER,
         });
 
-        const tokens = await this.generateToken(newUser);
+        const tokens = await this.generateToken(newUser.value);
         const updateRes = await this.userRepository.updateUserRefreshToken(
-            newUser.id,
+            newUser.value.id,
             tokens.value.refreshToken,
         );
-        if (!updateRes) {
+        if (!updateRes.value) {
             return Err('signUp failed');
         }
         return Ok({
-            id: newUser.id,
-            username: newUser.username,
+            id: newUser.value.id,
+            username: newUser.value.username,
             password: hashedPassword.value,
-            role: newUser.role,
+            role: newUser.value.role,
             accessToken: tokens.value.accessToken,
             refreshToken: tokens.value.refreshToken,
-            todoLists: newUser.todoLists,
-            updatedAt: newUser.updatedAt,
-            createdAt: newUser.createdAt,
+            todoLists: newUser.value.todoLists,
+            updatedAt: newUser.value.updatedAt,
+            createdAt: newUser.value.createdAt,
         });
     }
 
