@@ -265,7 +265,7 @@ export class UserService {
         password: string,
     ): Promise<Result<INewUserEntity>> {
         const user = await this.userRepository.getUser({ username: username });
-        if (user) {
+        if (user.value) {
             return Err('this user already exists');
         }
         const hashedPassword = await this.hashData(password);

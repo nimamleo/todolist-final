@@ -29,7 +29,6 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
             username: payload.username,
         });
         if (!user) return Err('please login', GenericErrorCode.UNAUTHORIZED);
-
-        return user;
+        return user.value;
     }
 }

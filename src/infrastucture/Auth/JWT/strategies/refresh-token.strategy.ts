@@ -19,6 +19,5 @@ export class RefreshTokenStrategy extends PassportStrategy(
 
     validate(req: Request, payload: IUserPayload) {
         const refreshToken = req;
-        console.log(refreshToken);
     }
 }

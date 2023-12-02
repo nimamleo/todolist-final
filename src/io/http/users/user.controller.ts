@@ -8,6 +8,7 @@ import {
     Post,
     Query,
     Res,
+    UploadedFile,
     UseGuards,
 } from '@nestjs/common';
 import { UserService } from 'src/application/user.service';
@@ -56,12 +57,22 @@ import {
 } from './models/refreshToken.model';
 import { LogoutRequest, LogoutResponse } from './models/logout.model';
 import { Ipagination } from '../../../common/interface/pagination.interface';
+import { AssetService } from '../../../application/asset.service';
+import { ApiFile } from '../../../common/swagger/api-file.decorator';
+import { Filters } from '../../../common/validation/custom-validation/file-filter';
+import {
+    CreateTodoWithImageRequest,
+    CreateTodoWithImageResponse,
+} from './models/createTodoWithImage.model';
 
 @Controller('users')
 
 // @ApiExtraModels(StdResponse<>)
 export class UserController extends AbstractHttpController {
-    constructor(private readonly userService: UserService) {
+    constructor(
+        private readonly userService: UserService,
+        private readonly assetService: AssetService,
+    ) {
         super();
     }
     // ======================================  TODO LIST  ===========================================
@@ -350,6 +361,59 @@ export class UserController extends AbstractHttpController {
                     title: res.value?.title,
                     description: res.value?.description,
                     updatedAt: res.value.updatedAt.toISOString(),
+                }),
+            );
+        }
+    }
+
+    @Post('todoWithImage/:id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiTags('Todo')
+    @ApiOperation({ summary: 'create todo with image' })
+    @ApiFile('file', true, {
+        fileFilter: Filters(['image/jpeg', 'image/png'], 1),
+    })
+    @ApiExtraModels(CreateTodoWithImageResponse, StdResponse)
+    @ApiStdResponse(CreateTodoWithImageResponse)
+    async createTodoWithImage(
+        @Res() response: Response,
+        @Body() body: CreateTodoWithImageRequest,
+        @GetUser() user: IUserEntity,
+        @Param('id') todolistId: string,
+        @UploadedFile()
+        file: Express.Multer.File,
+    ): Promise<CreateTodoResponse> {
+        const res = await this.userService.createTodo(
+            body,
+            todolistId,
+            user.id,
+        );
+        if (res.isError()) {
+            super.sendResult(response, res);
+            return;
+        }
+        const createImageRes = await this.assetService.createFile(
+            {
+                fileName: file.originalname,
+                size: file.size,
+                mimetype: file.mimetype,
+                buffer: file.buffer,
+            },
+            res.value.id,
+        );
+        if (res.isOk()) {
+            super.sendResult(
+                response,
+                Ok<CreateTodoWithImageResponse>({
+                    imageId: createImageRes.value.id,
+                    todoId: res.value.id,
+                    title: res.value.title,
+                    description: res.value.description,
+                    size: createImageRes.value.size,
+                    mimetype: createImageRes.value.mimetype,
+                    filePath: createImageRes.value.filePath,
+                    createdAt: res.value.createdAt.toISOString(),
                 }),
             );
         }

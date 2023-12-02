@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { ObjectId, Types } from 'mongoose';
+import mongoose, { ObjectId, Types } from 'mongoose';
 import { IUser, IUserEntity } from 'src/model/user.model';
 import { TodoList } from './todolist.schema';
 import { Role } from '../../../../common/enum/role.enum';

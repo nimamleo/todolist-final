@@ -30,7 +30,7 @@ import * as fs from 'fs';
 import { GetUser } from '../../../common/decorator/get-user.decorator';
 import { IUser, IUserEntity } from '../../../model/user.model';
 import { JwtAuthGuard } from '../../../infrastucture/Auth/JWT/guards/jwt.guard';
-import { CreateFileResponse } from '../users/models/createFile.model';
+import { CreateFileResponse } from './models/createFile.model';
 
 @Controller('files')
 @ApiTags('files')
