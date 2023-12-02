@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { IUserProvider } from '../provider/user.provider';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schema/user.schema';
@@ -145,11 +145,17 @@ export class UserMongoService implements IUserProvider {
             .aggregate([
                 {
                     $match: {
+                        _id: new Types.ObjectId(userId),
                         'todoLists._id': new Types.ObjectId(todolistId),
                     },
                 },
                 {
                     $unwind: '$todoLists',
+                },
+                {
+                    $match: {
+                        'todoLists._id': new Types.ObjectId(todolistId),
+                    },
                 },
                 {
                     $unwind: '$todoLists.todos',
@@ -164,7 +170,6 @@ export class UserMongoService implements IUserProvider {
             .limit(perPage);
 
         if (!res) return Err('todos not found', GenericErrorCode.NOT_FOUND);
-
         return Ok(
             res.map((x) => {
                 return Todo.toITodoEntity(x.todoLists.todos);
