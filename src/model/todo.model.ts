@@ -5,7 +5,7 @@ import { IFile } from './file.model';
 export interface ITodo {
     title: string;
     description: string;
-    imageId: IFile;
+    imageId: string;
 }
 
 export interface ITodoEntity extends ITodo, IEntity, IDated {}

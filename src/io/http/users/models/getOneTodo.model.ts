@@ -10,5 +10,7 @@ export class GetOneTodoResponse {
     @ApiProperty()
     description: string;
     @ApiProperty()
+    imageId: string;
+    @ApiProperty()
     createdAt: string;
 }

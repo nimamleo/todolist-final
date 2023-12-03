@@ -184,6 +184,7 @@ export class UserMongoService implements IUserProvider {
         const res = await this.userModel.aggregate([
             {
                 $match: {
+                    _id: new Types.ObjectId(userId),
                     'todoLists.todos._id': new Types.ObjectId(todoId),
                 },
             },

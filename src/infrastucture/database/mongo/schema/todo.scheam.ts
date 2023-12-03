@@ -13,7 +13,7 @@ export class Todo {
     description: string;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'File' })
-    imageId: IFile;
+    imageId: string;
 
     @Prop()
     createdAt: Date;

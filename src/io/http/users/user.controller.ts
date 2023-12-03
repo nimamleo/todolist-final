@@ -274,6 +274,7 @@ export class UserController extends AbstractHttpController {
                         id: todo.id,
                         title: todo.title,
                         description: todo.description,
+                        imageId: todo.imageId,
                         createdAt: todo.createdAt.toISOString(),
                     })),
                 }),
@@ -304,6 +305,7 @@ export class UserController extends AbstractHttpController {
                     id: res.value.id,
                     title: res.value.title,
                     description: res.value.description,
+                    imageId: res.value.imageId,
                     createdAt: res.value.createdAt.toISOString(),
                 }),
             );
@@ -420,6 +422,16 @@ export class UserController extends AbstractHttpController {
             super.sendResult(response, createImageRes);
             return;
         }
+        const updateImageId = await this.userService.updateTodo(
+            res.value.id,
+            todolistId,
+            {
+                imageId: createImageRes.value.id,
+                title: res.value.title,
+                description: res.value.description,
+            },
+            user.id,
+        );
         if (res.isOk()) {
             super.sendResult(
                 response,

@@ -16,5 +16,7 @@ export class GetAllTodoResponseItem {
     @ApiProperty()
     description: string;
     @ApiProperty()
+    imageId: string;
+    @ApiProperty()
     createdAt: string;
 }

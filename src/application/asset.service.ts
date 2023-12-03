@@ -49,7 +49,7 @@ export class AssetService {
         );
         if (saveInDB.isError()) {
             await this.fileService.deleteFile(saveInDisk.value.filePath);
-            return;
+            return Err('something went wrong');
         }
         return Ok(saveInDB.value);
     }
