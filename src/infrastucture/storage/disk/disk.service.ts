@@ -14,19 +14,27 @@ export class DiskService implements IFileProvider {
     constructor(private readonly configService: ConfigService) {}
     @HandleError
     async createFile(file: IFile): Promise<Result<IFile>> {
+        const size = 1;
+        const mimetypes = ['image/jpeg', 'image/png'];
+        const maxSize = size * 1024 * 1024;
+        if (file.size >= maxSize) {
+            return Err(`File size exceeded: ${maxSize} bytes`);
+        }
+        if (!mimetypes.some((m) => file.mimetype.includes(m))) {
+            return Err(`File type is not matching: ${mimetypes.join(', ')}`);
+        }
+
         const date = new Date();
         const year = date.getFullYear().toString();
         const month = date.getMonth().toString();
         const day = date.getDay().toString();
         const route = this.configService.get('ROUTE');
         const uploadPath = path.join(__dirname, route, year, month, day);
-
         return Ok(await this.saveFile(file, uploadPath));
     }
     serveImage(imagePath: string): Promise<Result<any>> {
         return new Promise((resolve, reject) => {
             try {
-                // const stream = fs.createReadStream(imagePath);
                 const stream = fs.createReadStream(imagePath);
                 resolve(Ok(stream));
             } catch (e) {

@@ -35,7 +35,7 @@ export class AssetService {
     ): Promise<Result<Partial<IFileEntity>>> {
         const saveInDisk = await this.fileService.createFile(file);
         if (saveInDisk.isError()) {
-            return Err('can not save file in storage');
+            return Err(saveInDisk.err);
         }
 
         const saveInDB = await this.fileRepository.createFile(
@@ -49,6 +49,7 @@ export class AssetService {
         );
         if (saveInDB.isError()) {
             await this.fileService.deleteFile(saveInDisk.value.filePath);
+            return;
         }
         return Ok(saveInDB.value);
     }

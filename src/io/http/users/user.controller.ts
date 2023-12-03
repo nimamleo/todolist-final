@@ -10,10 +10,13 @@ import {
     Res,
     UploadedFile,
     UseGuards,
+    UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from 'src/application/user.service';
 import {
     ApiBearerAuth,
+    ApiBody,
+    ApiConsumes,
     ApiExtraModels,
     ApiOperation,
     ApiTags,
@@ -55,15 +58,13 @@ import {
     RefreshTokenRequest,
     RefreshTokenResponse,
 } from './models/refreshToken.model';
-import { LogoutRequest, LogoutResponse } from './models/logout.model';
-import { Ipagination } from '../../../common/interface/pagination.interface';
+import { LogoutResponse } from './models/logout.model';
 import { AssetService } from '../../../application/asset.service';
-import { ApiFile } from '../../../common/swagger/api-file.decorator';
-import { Filters } from '../../../common/validation/custom-validation/file-filter';
 import {
     CreateTodoWithImageRequest,
     CreateTodoWithImageResponse,
 } from './models/createTodoWithImage.model';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 
@@ -371,9 +372,22 @@ export class UserController extends AbstractHttpController {
     @ApiBearerAuth()
     @ApiTags('Todo')
     @ApiOperation({ summary: 'create todo with image' })
-    @ApiFile('file', true, {
-        fileFilter: Filters(['image/jpeg', 'image/png'], 1),
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            required: ['title', 'description', 'file'],
+            properties: {
+                title: { type: 'string' },
+                description: { type: 'integer' },
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
     })
+    @UseInterceptors(FileInterceptor('file'))
     @ApiExtraModels(CreateTodoWithImageResponse, StdResponse)
     @ApiStdResponse(CreateTodoWithImageResponse)
     async createTodoWithImage(
@@ -402,6 +416,10 @@ export class UserController extends AbstractHttpController {
             },
             res.value.id,
         );
+        if (createImageRes.isError()) {
+            super.sendResult(response, createImageRes);
+            return;
+        }
         if (res.isOk()) {
             super.sendResult(
                 response,
@@ -417,6 +435,7 @@ export class UserController extends AbstractHttpController {
                 }),
             );
         }
+        return;
     }
 
     // ======================================USER ==============================================
